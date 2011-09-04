@@ -73,13 +73,12 @@ class Worker(configurated):
     WorkController = WorkController
 
     inherit_confopts = (WorkController, )
-    loglevel = from_config("log_level")
     redirect_stdouts = from_config()
     redirect_stdouts_level = from_config()
 
     def __init__(self, hostname=None, discard=False, embed_clockservice=False,
             queues=None, include=None, app=None, pidfile=None,
-            autoscale=None, autoreload=False, **kwargs):
+            autoscale=None, autoreload=False, logfile=None, loglevel=None, **kwargs):
         self.app = app = app_or_default(app)
         self.setup_defaults(kwargs, namespace="celeryd")
         if not self.concurrency:
@@ -96,6 +95,8 @@ class Worker(configurated):
         self.pidfile = pidfile
         self.autoscale = None
         self.autoreload = autoreload
+        self.logfile = logfile
+        self.loglevel = loglevel or "WARNING"
         if autoscale:
             max_c, _, min_c = autoscale.partition(",")
             self.autoscale = [int(max_c), min_c and int(min_c) or 0]
@@ -217,6 +218,8 @@ class Worker(configurated):
                                     embed_clockservice=self.embed_clockservice,
                                     autoscale=self.autoscale,
                                     autoreload=self.autoreload,
+                                    logfile=self.logfile,
+                                    loglevel=self.loglevel,
                                     **self.confopts_as_dict())
         self.install_platform_tweaks(worker)
         worker.start()

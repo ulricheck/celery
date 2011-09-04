@@ -171,8 +171,6 @@ class WorkController(configurated):
     TERMINATE = TERMINATE
 
     concurrency = from_config()
-    loglevel = logging.ERROR
-    logfile = from_config("log_file")
     send_events = from_config()
     pool_cls = from_config("pool")
     consumer_cls = from_config("consumer")
@@ -195,16 +193,16 @@ class WorkController(configurated):
     _state = None
     _running = 0
 
-    def __init__(self, loglevel=None, hostname=None, logger=None,
-            ready_callback=noop,
-            queues=None, app=None, **kwargs):
+    def __init__(self, logfile=None, loglevel=logging.ERROR, hostname=None,
+            logger=None, ready_callback=noop, queues=None, app=None, **kwargs):
         self.app = app_or_default(app)
         self._shutdown_complete = threading.Event()
         self.setup_defaults(kwargs, namespace="celeryd")
         self.app.select_queues(queues)  # select queues subset.
 
         # Options
-        self.loglevel = loglevel or self.loglevel
+        self.loglevel = loglevel
+        self.logfile = logfile
         self.logger = self.app.log.get_default_logger()
         self.hostname = hostname or socket.gethostname()
         self.ready_callback = ready_callback

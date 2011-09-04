@@ -118,11 +118,11 @@ class WorkerCommand(Command):
                 help="Discard all waiting tasks before the server is"
                      "started. WARNING: There is no undo operation "
                      "and the tasks will be deleted."),
-            Option('-f', '--logfile', default=conf.CELERYD_LOG_FILE,
-                action="store", dest="logfile",
+            Option('-f', '--logfile',
+                default=None, action="store", dest="logfile",
                 help="Path to log file."),
-            Option('-l', '--loglevel', default=conf.CELERYD_LOG_LEVEL,
-                action="store", dest="loglevel",
+            Option('-l', '--loglevel',
+                default="WARNING", action="store", dest="loglevel",
                 help="Choose between DEBUG/INFO/WARNING/ERROR/CRITICAL"),
             Option('-n', '--hostname', default=None,
                 action="store", dest="hostname",

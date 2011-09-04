@@ -10,6 +10,7 @@ from .. import __version__, platforms
 from .. import beat
 from ..app import app_or_default
 from ..app.abstract import configurated, from_config
+from ..log import mlevel
 from ..utils import LOG_LEVELS, qualname
 from ..utils.timeutils import humanize_seconds
 
@@ -27,26 +28,23 @@ Configuration ->
 class Beat(configurated):
     Service = beat.Service
 
-    loglevel = from_config("log_level")
-    logfile = from_config("log_file")
     schedule = from_config("schedule_filename")
     scheduler_cls = from_config("scheduler")
     redirect_stdouts = from_config()
     redirect_stdouts_level = from_config()
 
-    def __init__(self, max_interval=None, app=None,
-            socket_timeout=30, pidfile=None, **kwargs):
+    def __init__(self, max_interval=None, app=None, socket_timeout=30,
+            pidfile=None, loglevel=None, logfile=None, **kwargs):
         """Starts the celerybeat task scheduler."""
         self.app = app = app_or_default(app)
         self.setup_defaults(kwargs, namespace="celerybeat")
 
         self.max_interval = max_interval
         self.socket_timeout = socket_timeout
+        self.loglevel = mlevel(loglevel or "WARNING")
+        self.logfile = logfile
         self.colored = app.log.colored(self.logfile)
         self.pidfile = pidfile
-
-        if not isinstance(self.loglevel, int):
-            self.loglevel = LOG_LEVELS[self.loglevel.upper()]
 
     def run(self):
         logger = self.setup_logging()

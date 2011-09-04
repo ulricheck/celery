@@ -169,9 +169,6 @@ NAMESPACES = {
         "CONSUMER": Option("celery.worker.consumer.Consumer"),
         "LOG_FORMAT": Option(DEFAULT_PROCESS_LOG_FMT),
         "LOG_COLOR": Option(type="bool"),
-        "LOG_LEVEL": Option("WARN", deprecate_by="2.4", remove_by="3.0",
-                            alt="--loglevel argument"),
-        "LOG_FILE": Option(deprecate_by="2.4", remove_by="3.0"),
         "MEDIATOR": Option("celery.worker.mediator.Mediator"),
         "MAX_TASKS_PER_CHILD": Option(type="int"),
         "POOL": Option(DEFAULT_POOL),
@@ -187,12 +184,8 @@ NAMESPACES = {
         "SCHEDULER": Option("celery.beat.PersistentScheduler"),
         "SCHEDULE_FILENAME": Option("celerybeat-schedule"),
         "MAX_LOOP_INTERVAL": Option(5 * 60, type="int"),
-        "LOG_LEVEL": Option("INFO", deprecate_by="2.4", remove_by="3.0"),
-        "LOG_FILE": Option(deprecate_by="2.4", remove_by="3.0"),
     },
     "CELERYMON": {
-        "LOG_LEVEL": Option("INFO", deprecate_by="2.4", remove_by="3.0"),
-        "LOG_FILE": Option(deprecate_by="2.4", remove_by="3.0"),
         "LOG_FORMAT": Option(DEFAULT_LOG_FMT),
     },
     "EMAIL": {

@@ -78,7 +78,6 @@ class Logging(object):
 
     def __init__(self, app):
         self.app = app
-        self.loglevel = mlevel(self.app.conf.CELERYD_LOG_LEVEL)
         self.format = self.app.conf.CELERYD_LOG_FORMAT
         self.task_format = self.app.conf.CELERYD_TASK_LOG_FORMAT
         self.colorize = self.app.conf.CELERYD_LOG_COLOR
@@ -106,7 +105,7 @@ class Logging(object):
             format=None, colorize=None, **kwargs):
         if Logging._setup:
             return
-        loglevel = mlevel(loglevel or self.loglevel)
+        loglevel = mlevel(loglevel or "WARNING")
         format = format or self.format
         if colorize is None:
             colorize = self.supports_color(logfile)
@@ -185,7 +184,7 @@ class Logging(object):
         Returns logger object.
 
         """
-        loglevel = mlevel(loglevel or self.loglevel)
+        loglevel = mlevel(loglevel or "WARNING")
         format = format or self.format
         if colorize is None:
             colorize = self.supports_color(logfile)
@@ -207,7 +206,7 @@ class Logging(object):
         Returns logger object.
 
         """
-        loglevel = mlevel(loglevel or self.loglevel)
+        loglevel = mlevel(loglevel or "WARNING")
         format = format or self.task_format
         if colorize is None:
             colorize = self.supports_color(logfile)

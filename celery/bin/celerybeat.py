@@ -83,8 +83,7 @@ class BeatCommand(Command):
                 help="Scheduler class. Default is "
                      "celery.beat:PersistentScheduler"),
             Option('-l', '--loglevel',
-                default=conf.CELERYBEAT_LOG_LEVEL,
-                action="store", dest="loglevel",
+                default="WARNING", action="store", dest="loglevel",
                 help="Loglevel. One of DEBUG/INFO/WARNING/ERROR/CRITICAL."))
 
 
