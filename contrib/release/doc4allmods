@@ -19,7 +19,6 @@ SKIP_FILES="celery.backends.pyredis.rst
             celery.app.base.rst
             celery.apps.rst
             celery.db.rst
-            celery.messaging.rst
             celery.execute.rst
             celery.conf.rst
             celery.decorators.rst
