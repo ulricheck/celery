@@ -13,7 +13,6 @@ SKIP_FILES="celery.backends.pyredis.rst
             celery.worker.control.rst
             celery.worker.control.builtins.rst
             celery.worker.control.registry.rst
-            celery.task.schedules.rst
             celery.local.rst
             celery.models.rst
             celery.app.base.rst
