@@ -30,7 +30,6 @@ def _unlock_chord(setid, callback, interval=1, propagate=False,
 
 
 class Chord(current_app.Task):
-    accept_magic_kwargs = False
     name = "celery.chord"
 
     def run(self, set, body, interval=1, max_retries=None,

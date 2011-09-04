@@ -33,9 +33,7 @@ from celery.worker.state import revoked
 
 from celery.tests.utils import Case, WhateverIO, wrap_logger
 
-
 scratch = {"ACK": False}
-some_kwargs_scratchpad = {}
 
 
 def jail(task_id, name, args, kwargs):
@@ -46,7 +44,7 @@ def on_ack(*args, **kwargs):
     scratch["ACK"] = True
 
 
-@task_dec(accept_magic_kwargs=True)
+@task_dec()
 def mytask(i, **kwargs):
     return i ** i
 
@@ -63,13 +61,7 @@ class MyTaskIgnoreResult(Task):
         return i ** i
 
 
-@task_dec(accept_magic_kwargs=True)
-def mytask_some_kwargs(i, logfile):
-    some_kwargs_scratchpad["logfile"] = logfile
-    return i ** i
-
-
-@task_dec(accept_magic_kwargs=True)
+@task_dec()
 def mytask_raising(i, **kwargs):
     raise KeyError(i)
 
@@ -605,15 +597,6 @@ class test_TaskRequest(Case):
         self.assertEqual(meta["result"], 256)
         self.assertEqual(meta["status"], states.SUCCESS)
 
-    def test_execute_success_some_kwargs(self):
-        tid = uuid()
-        tw = TaskRequest(mytask_some_kwargs.name, tid, [4], {})
-        self.assertEqual(tw.execute(logfile="foobaz.log"), 256)
-        meta = mytask_some_kwargs.backend.get_task_meta(tid)
-        self.assertEqual(some_kwargs_scratchpad.get("logfile"), "foobaz.log")
-        self.assertEqual(meta["result"], 256)
-        self.assertEqual(meta["status"], states.SUCCESS)
-
     def test_execute_ack(self):
         tid = uuid()
         tw = TaskRequest(mytask.name, tid, [4], {"f": "x"},
@@ -658,20 +641,6 @@ class test_TaskRequest(Case):
         self.assertEqual(p.args[2], [4])
         self.assertIn("f", p.args[3])
         self.assertIn([4], p.args)
-
-    def test_default_kwargs(self):
-        tid = uuid()
-        tw = TaskRequest(mytask.name, tid, [4], {"f": "x"})
-        self.assertDictEqual(
-                tw.extend_with_default_kwargs(10, "some_logfile"), {
-                    "f": "x",
-                    "logfile": "some_logfile",
-                    "loglevel": 10,
-                    "task_id": tw.task_id,
-                    "task_retries": 0,
-                    "task_is_eager": False,
-                    "delivery_info": {"exchange": None, "routing_key": None},
-                    "task_name": tw.task_name})
 
     def _test_on_failure(self, exception):
         app = app_or_default()

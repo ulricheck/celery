@@ -49,11 +49,10 @@ class AppPickler(object):
         return self.build_standard_kwargs(*args)
 
     def build_standard_kwargs(self, main, changes, loader, backend, amqp,
-            events, log, control, accept_magic_kwargs):
+            events, log, control):
         return dict(main=main, loader=loader, backend=backend, amqp=amqp,
                     changes=changes, events=events, log=log, control=control,
-                    set_as_current=False,
-                    accept_magic_kwargs=accept_magic_kwargs)
+                    set_as_current=False)
 
     def construct(self, cls, **kwargs):
         return cls(**kwargs)
@@ -111,7 +110,6 @@ class App(base.BaseApp):
             ignore_result = conf.CELERY_IGNORE_RESULT
             store_errors_even_if_ignored = \
                 conf.CELERY_STORE_ERRORS_EVEN_IF_IGNORED
-            accept_magic_kwargs = self.accept_magic_kwargs
         Task.__doc__ = BaseTask.__doc__
 
         return Task
@@ -141,31 +139,31 @@ class App(base.BaseApp):
     def task(self, *args, **options):
         """Decorator to create a task class out of any callable.
 
-        .. admonition:: Examples
+        **Examples:**
 
-            .. code-block:: python
+        .. code-block:: python
 
-                @task()
-                def refresh_feed(url):
+            @task()
+            def refresh_feed(url):
+                return Feed.objects.get(url=url).refresh()
+
+        With setting extra options and using retry.
+
+        .. code-block:: python
+
+            @task(exchange="feeds")
+            def refresh_feed(url, **kwargs):
+                try:
                     return Feed.objects.get(url=url).refresh()
+                except socket.error, exc:
+                    refresh_feed.retry(args=[url], kwargs=kwargs, exc=exc)
 
-            With setting extra options and using retry.
+        Calling the resulting task:
 
-            .. code-block:: python
-
-                @task(exchange="feeds")
-                def refresh_feed(url, **kwargs):
-                    try:
-                        return Feed.objects.get(url=url).refresh()
-                    except socket.error, exc:
-                        refresh_feed.retry(args=[url], kwargs=kwargs, exc=exc)
-
-            Calling the resulting task:
-
-                >>> refresh_feed("http://example.com/rss") # Regular
-                <Feed: http://example.com/rss>
-                >>> refresh_feed.delay("http://example.com/rss") # Async
-                <AsyncResult: 8998d0f4-da0b-4669-ba03-d5ab5ac6ad5d>
+            >>> refresh_feed("http://example.com/rss") # Regular
+            <Feed: http://example.com/rss>
+            >>> refresh_feed.delay("http://example.com/rss") # Async
+            <AsyncResult: 8998d0f4-da0b-4669-ba03-d5ab5ac6ad5d>
 
         """
 
@@ -176,7 +174,6 @@ class App(base.BaseApp):
 
                 T = type(fun.__name__, (base, ), dict({
                         "app": self,
-                        "accept_magic_kwargs": False,
                         "run": staticmethod(fun),
                         "__doc__": fun.__doc__,
                         "__module__": fun.__module__}, **options))()
@@ -224,17 +221,14 @@ class App(base.BaseApp):
                 self.amqp_cls,
                 self.events_cls,
                 self.log_cls,
-                self.control_cls,
-                self.accept_magic_kwargs)
+                self.control_cls)
 
 
 #: The "default" loader is the default loader used by old applications.
 default_loader = os.environ.get("CELERY_LOADER") or "default"
 
 #: Global fallback app instance.
-default_app = App("default", loader=default_loader,
-                             set_as_current=False,
-                             accept_magic_kwargs=True)
+default_app = App("default", loader=default_loader, set_as_current=False)
 
 
 def current_app():

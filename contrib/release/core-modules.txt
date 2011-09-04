@@ -13,7 +13,6 @@ celery/beat.py
 celery/concurrency/__init__.py
 celery/concurrency/base.py
 celery/datastructures.py
-celery/decorators.py
 celery/events/__init__.py
 celery/events/state.py
 celery/exceptions.py

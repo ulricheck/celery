@@ -125,7 +125,7 @@ Aliases (Pending deprecation)
 * celery.task.sets
     * .TaskSet -> {app.TaskSet}
 
-* celery.decorators / celery.task
+* celery.task
     * .task -> {app.task}
 
 * celery.execute

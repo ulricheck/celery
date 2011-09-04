@@ -25,7 +25,7 @@ from ..registry import tasks
 from ..app import app_or_default
 from ..execute.trace import build_tracer, trace_task, report_internal_error
 from ..platforms import set_mp_process_title as setps
-from ..utils import noop, kwdict, fun_takes_kwargs, truncate_text
+from ..utils import noop, kwdict, truncate_text
 from ..utils.encoding import safe_repr, safe_str
 from ..utils.timeutils import maybe_iso8601, timezone
 
@@ -152,33 +152,6 @@ class Request(object):
                    delivery_info=getattr(message, "delivery_info", None),
                    **kwargs)
 
-    def extend_with_default_kwargs(self, loglevel, logfile):
-        """Extend the tasks keyword arguments with standard task arguments.
-
-        Currently these are `logfile`, `loglevel`, `task_id`,
-        `task_name`, `task_retries`, and `delivery_info`.
-
-        See :meth:`celery.task.base.Task.run` for more information.
-
-        Magic keyword arguments are deprecated and will be removed
-        in version 3.0.
-
-        """
-        kwargs = dict(self.kwargs)
-        default_kwargs = {"logfile": logfile,
-                          "loglevel": loglevel,
-                          "task_id": self.id,
-                          "task_name": self.name,
-                          "task_retries": self.request_dict.get("retries", 0),
-                          "task_is_eager": False,
-                          "delivery_info": self.delivery_info}
-        fun = self.task.run
-        supported_keys = fun_takes_kwargs(fun, default_kwargs)
-        extend_with = dict((key, val) for key, val in default_kwargs.items()
-                                if key in supported_keys)
-        kwargs.update(extend_with)
-        return kwargs
-
     def execute_using_pool(self, pool, loglevel=None, logfile=None):
         """Like :meth:`execute`, but using a worker pool.
 
@@ -194,15 +167,13 @@ class Request(object):
 
         task = self.task
         hostname = self.hostname
-        kwargs = self.kwargs
-        if self.task.accept_magic_kwargs:
-            kwargs = self.extend_with_default_kwargs(loglevel, logfile)
         request = self.request_dict
         request.update({"loglevel": loglevel, "logfile": logfile,
                         "hostname": hostname, "is_eager": False,
                         "delivery_info": self.delivery_info})
         result = pool.apply_async(execute_and_trace,
-                                  args=(self.name, self.id, self.args, kwargs),
+                                  args=(self.name, self.id,
+                                        self.args, self.kwargs),
                                   kwargs={"hostname": hostname,
                                           "request": request},
                                   accept_callback=self.on_accepted,
@@ -228,14 +199,11 @@ class Request(object):
         if not self.task.acks_late:
             self.acknowledge()
 
-        kwargs = self.kwargs
-        if self.task.accept_magic_kwargs:
-            kwargs = self.extend_with_default_kwargs(loglevel, logfile)
         request = self.request_dict
         request.update({"loglevel": loglevel, "logfile": logfile,
                         "hostname": self.hostname, "is_eager": False,
                         "delivery_info": self.delivery_info})
-        retval, _ = trace_task(self.task, self.id, self.args, kwargs,
+        retval, _ = trace_task(self.task, self.id, self.args, self.kwargs,
                                **{"hostname": self.hostname,
                                   "loader": self.app.loader,
                                   "request": request})

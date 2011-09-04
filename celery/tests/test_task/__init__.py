@@ -78,11 +78,11 @@ class RetryTaskNoArgs(task.Task):
     def run(self, **kwargs):
         self.__class__.iterations += 1
 
-        retries = kwargs["task_retries"]
+        retries = self.request.retries
         if retries >= 3:
             return 42
         else:
-            return self.retry(kwargs=kwargs, countdown=0)
+            return self.retry(countdown=0)
 
 
 class RetryTaskMockApply(task.Task):
@@ -93,12 +93,12 @@ class RetryTaskMockApply(task.Task):
     def run(self, arg1, arg2, kwarg=1, **kwargs):
         self.__class__.iterations += 1
 
-        retries = kwargs["task_retries"]
+        retries = self.request.retries
         if retries >= 3:
             return arg1
         else:
             kwargs.update({"kwarg": kwarg})
-            return self.retry(args=[arg1, arg2], kwargs=kwargs, countdown=0)
+            return self.retry(kwargs=kwargs, countdown=0)
 
     @classmethod
     def apply_async(self, *args, **kwargs):
@@ -116,7 +116,7 @@ class RetryTaskCustomExc(task.Task):
     def run(self, arg1, arg2, kwarg=1, **kwargs):
         self.__class__.iterations += 1
 
-        retries = kwargs["task_retries"]
+        retries = self.request.retries
         if retries >= 3:
             return arg1 + kwarg
         else:
@@ -124,8 +124,7 @@ class RetryTaskCustomExc(task.Task):
                 raise MyCustomException("Elaine Marie Benes")
             except MyCustomException, exc:
                 kwargs.update({"kwarg": kwarg})
-                return self.retry(args=[arg1, arg2], kwargs=kwargs,
-                                  countdown=0, exc=exc)
+                return self.retry(kwargs=kwargs, countdown=0, exc=exc)
 
 
 class TestTaskRetries(Case):
