@@ -20,7 +20,6 @@ SKIP_FILES="celery.backends.pyredis.rst
             celery.apps.rst
             celery.db.rst
             celery.execute.rst
-            celery.conf.rst
             celery.decorators.rst
             celery.db.a805d4bd.rst
             celery.db.dfd042c7.rst"
