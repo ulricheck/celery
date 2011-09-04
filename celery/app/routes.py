@@ -12,8 +12,8 @@
 """
 from __future__ import absolute_import
 
-from .exceptions import QueueNotFound
-from .utils import firstmethod, instantiate, lpmerge, mpromise
+from ..exceptions import QueueNotFound
+from ..utils import firstmethod, instantiate, lpmerge, mpromise
 
 _first_route = firstmethod("route_for_task")
 
@@ -34,7 +34,7 @@ class Router(object):
 
     def __init__(self, routes=None, queues=None, create_missing=False,
             app=None):
-        from .app import app_or_default
+        from . import app_or_default
         self.app = app_or_default(app)
         self.queues = {} if queues is None else queues
         self.routes = [] if routes is None else routes
