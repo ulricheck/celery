@@ -234,12 +234,11 @@ class result(Command):
     )
 
     def run(self, task_id, *args, **kwargs):
-        from .. import registry
         result_cls = self.app.AsyncResult
         task = kwargs.get("task")
 
         if task:
-            result_cls = registry.tasks[task].AsyncResult
+            result_cls = self.app.tasks[task].AsyncResult
         result = result_cls(task_id)
         self.out(self.prettify(result.get())[1])
 result = command(result)
@@ -376,13 +375,12 @@ class shell(Command):
 
     def run(self, force_ipython=False, force_bpython=False,
             force_python=False, without_tasks=False, **kwargs):
-        from .. import registry
         self.app.loader.import_default_modules()
         self.locals = {"celery": self.app}
 
         if not without_tasks:
             self.locals.update(dict((task.__name__, task)
-                                for task in registry.tasks.itervalues()))
+                                for task in self.app.tasks.itervalues()))
 
         if force_python:
             return self.invoke_fallback_shell()

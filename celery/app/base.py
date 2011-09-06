@@ -89,12 +89,13 @@ class BaseApp(object):
     loader_cls = "celery.loaders.app:AppLoader"
     log_cls = "celery.app.log:Logging"
     control_cls = "celery.app.control:Control"
+    registry_cls = "celery.app.registry:TaskRegistry"
 
     _pool = None
 
     def __init__(self, main=None, loader=None, backend=None,
             amqp=None, events=None, log=None, control=None,
-            set_as_current=True, **kwargs):
+            set_as_current=True, tasks=None, **kwargs):
         self.main = main
         self.amqp_cls = amqp or self.amqp_cls
         self.backend_cls = backend or self.backend_cls
@@ -104,6 +105,8 @@ class BaseApp(object):
         self.control_cls = control or self.control_cls
         self.set_as_current = set_as_current
         self.clock = LamportClock()
+        self.registry_cls = self.registry_cls if tasks is None else tasks
+        self._tasks = instantiate(self.registry_cls)
 
         self.on_init()
 
@@ -381,5 +384,6 @@ class BaseApp(object):
 
     @cached_property
     def tasks(self):
-        from ..registry import tasks
-        return tasks
+        from .task.builtins import load_builtins
+        load_builtins(self)
+        return self._tasks

@@ -15,14 +15,16 @@ from __future__ import absolute_import
 import sys
 import threading
 
+from ... import current_app
 from ... import states
 from ...datastructures import ExceptionInfo
 from ...exceptions import MaxRetriesExceededError, RetryTaskError
 from ...execute.trace import eager_trace_task
-from ...registry import tasks, _unpickle_task
 from ...result import EagerResult
 from ...utils import instantiate, mattrgetter, uuid, maybe_reraise
 from ...utils.mail import ErrorMail
+
+from ..registry import _unpickle_task
 
 extract_exec_options = mattrgetter("queue", "routing_key",
                                    "exchange", "immediate",
@@ -75,6 +77,7 @@ class TaskType(type):
 
     def __new__(cls, name, bases, attrs):
         new = super(TaskType, cls).__new__
+        app = attrs.get("app") or current_app
         task_module = attrs.get("__module__") or "__main__"
 
         if "__call__" in attrs:
@@ -117,6 +120,7 @@ class TaskType(type):
         # we may or may not be the first time the task tries to register
         # with the framework.  There should only be one class for each task
         # name, so we always return the registered version.
+        tasks = app._tasks
         task_name = attrs["name"]
         if task_name not in tasks:
             task_cls = new(cls, name, bases, attrs)
@@ -126,7 +130,7 @@ class TaskType(type):
         task = tasks[task_name].__class__
 
         # decorate with annotations from config.
-        task.app.annotate_task(task)
+        app.annotate_task(task)
         return task
 
     def __repr__(cls):
@@ -261,9 +265,6 @@ class BaseTask(object):
 
     #: Default task expiry time.
     expires = None
-
-    #: The type of task *(no longer used)*.
-    type = "regular"
 
     #: Execution strategy used, or the qualified name of one.
     Strategy = "celery.worker.strategy:default"
@@ -582,7 +583,7 @@ class BaseTask(object):
                                 options.pop("throw", None))
 
         # Make sure we get the task instance, not class.
-        task = tasks[self.name]
+        task = self.app._tasks[self.name]
 
         request = {"id": task_id,
                    "retries": retries,
