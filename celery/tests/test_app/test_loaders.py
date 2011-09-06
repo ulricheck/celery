@@ -7,9 +7,7 @@ import sys
 from celery import task
 from celery import loaders
 from celery.app import app_or_default
-from celery.exceptions import (
-        CPendingDeprecationWarning,
-        ImproperlyConfigured)
+from celery.exceptions import ImproperlyConfigured
 from celery.loaders import base
 from celery.loaders import default
 from celery.loaders.app import AppLoader

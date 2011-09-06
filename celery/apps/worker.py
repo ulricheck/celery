@@ -16,7 +16,8 @@ from .. import __version__, platforms, signals
 from ..app import app_or_default
 from ..app.abstract import configurated, from_config
 from ..exceptions import ImproperlyConfigured, SystemTerminate
-from ..utils import isatty, LOG_LEVELS, cry, qualname
+from ..utils import isatty, cry, qualname
+from ..utils.log import LOG_LEVELS, mlevel
 from ..worker import WorkController
 
 try:
@@ -77,8 +78,8 @@ class Worker(configurated):
     redirect_stdouts_level = from_config()
 
     def __init__(self, hostname=None, discard=False, embed_clockservice=False,
-            queues=None, include=None, app=None, pidfile=None,
-            autoscale=None, autoreload=False, logfile=None, loglevel=None, **kwargs):
+            queues=None, include=None, app=None, pidfile=None, autoscale=None,
+            autoreload=False, logfile=None, loglevel=None, **kwargs):
         self.app = app = app_or_default(app)
         self.setup_defaults(kwargs, namespace="celeryd")
         if not self.concurrency:
@@ -109,14 +110,13 @@ class Worker(configurated):
         if isinstance(self.include, basestring):
             self.include = self.include.split(",")
 
-        if not isinstance(self.loglevel, int):
-            try:
-                self.loglevel = LOG_LEVELS[self.loglevel.upper()]
-            except KeyError:
-                self.die("Unknown level %r. Please use one of %s." % (
-                            self.loglevel,
-                            "|".join(l for l in LOG_LEVELS.keys()
-                                        if isinstance(l, basestring))))
+        try:
+            self.loglevel = mlevel(self.loglevel)
+        except KeyError:
+            self.die("Unknown level %r. Please use one of %s." % (
+                        self.loglevel,
+                        "|".join(l for l in LOG_LEVELS.keys()
+                                    if isinstance(l, basestring))))
 
     def run(self):
         self.init_loader()

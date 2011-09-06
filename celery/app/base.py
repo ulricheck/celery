@@ -87,7 +87,7 @@ class BaseApp(object):
     backend_cls = None
     events_cls = "celery.events:Events"
     loader_cls = "celery.loaders.app:AppLoader"
-    log_cls = "celery.log:Logging"
+    log_cls = "celery.app.log:Logging"
     control_cls = "celery.app.control:Control"
 
     _pool = None

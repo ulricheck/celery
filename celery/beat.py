@@ -29,7 +29,6 @@ from . import registry
 from . import signals
 from . import current_app
 from .app import app_or_default
-from .log import SilenceRepeated
 from .schedules import maybe_schedule, crontab
 from .utils import cached_property, instantiate, maybe_promise
 from .utils.timeutils import humanize_seconds
@@ -385,8 +384,6 @@ class Service(object):
 
         self._is_shutdown = threading.Event()
         self._is_stopped = threading.Event()
-        self.debug = SilenceRepeated(self.logger.debug,
-                        10 if self.max_interval < 60 else 1)
 
     def start(self, embedded_process=False):
         self.logger.info("Celerybeat: Starting...")
@@ -401,8 +398,8 @@ class Service(object):
         try:
             while not self._is_shutdown.isSet():
                 interval = self.scheduler.tick()
-                self.debug("Celerybeat: Waking up %s." % (
-                        humanize_seconds(interval, prefix="in ")))
+                self.logger.debug("Celerybeat: Waking up %s.",
+                                   humanize_seconds(interval, prefix="in "))
                 time.sleep(interval)
         except (KeyboardInterrupt, SystemExit):
             self._is_shutdown.set()

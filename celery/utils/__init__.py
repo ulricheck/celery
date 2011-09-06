@@ -14,17 +14,14 @@ from __future__ import with_statement
 
 import os
 import sys
-import operator
 import imp as _imp
 import importlib
-import logging
 import threading
 import traceback
 import warnings
 
 from contextlib import contextmanager
-from functools import partial, wraps
-from inspect import getargspec
+from functools import wraps
 from itertools import islice
 from pprint import pprint
 
@@ -35,10 +32,7 @@ uuid = gen_unique_id
 
 from ..exceptions import CPendingDeprecationWarning, CDeprecationWarning
 from .compat import StringIO, reload
-
-LOG_LEVELS = dict(logging._levelNames)
-LOG_LEVELS["FATAL"] = logging.FATAL
-LOG_LEVELS[logging.FATAL] = "FATAL"
+from .log import LOG_LEVELS  # noqa
 
 PENDING_DEPRECATION_FMT = """
     %(description)s is scheduled for deprecation in \
