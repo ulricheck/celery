@@ -256,11 +256,6 @@ General
     Defaults to the :setting:`CELERY_SEND_TASK_ERROR_EMAILS` setting.
     See :ref:`conf-error-mails` for more information.
 
-.. attribute:: Task.error_whitelist
-
-    If the sending of error emails is enabled for this task, then
-    this is a white list of exceptions to actually send emails about.
-
 .. attribute:: Task.serializer
 
     A string identifying the default serialization

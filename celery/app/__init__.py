@@ -102,7 +102,6 @@ class App(base.BaseApp):
             exchange_type = conf.CELERY_DEFAULT_EXCHANGE_TYPE
             delivery_mode = conf.CELERY_DEFAULT_DELIVERY_MODE
             send_error_emails = conf.CELERY_SEND_TASK_ERROR_EMAILS
-            error_whitelist = conf.CELERY_TASK_ERROR_WHITELIST
             serializer = conf.CELERY_TASK_SERIALIZER
             rate_limit = conf.CELERY_DEFAULT_RATE_LIMIT
             track_started = conf.CELERY_TRACK_STARTED

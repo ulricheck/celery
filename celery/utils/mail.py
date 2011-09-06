@@ -157,19 +157,15 @@ Just to let you know,
 celeryd at %%(hostname)s.
 """ % {"EMAIL_SIGNATURE_SEP": EMAIL_SIGNATURE_SEP}
 
-    error_whitelist = None
-
     def __init__(self, task, **kwargs):
         self.task = task
         self.email_subject = kwargs.get("subject", self.subject)
         self.email_body = kwargs.get("body", self.body)
-        self.error_whitelist = getattr(task, "error_whitelist")
 
     def should_send(self, context, exc):
         """Returns true or false depending on if a task error mail
         should be sent for this type of error."""
-        allow_classes = tuple(map(get_symbol_by_name,  self.error_whitelist))
-        return not self.error_whitelist or isinstance(exc, allow_classes)
+        return True
 
     def format_subject(self, context):
         return self.subject.strip() % context

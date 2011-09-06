@@ -1596,15 +1596,3 @@ Please use :setting:`CELERY_TASK_RESULT_EXPIRES` instead.
 .. note::
 
     AMQP result expiration requires RabbitMQ versions 2.1.0 or higher.
-
-.. setting:: CELERY_TASK_ERROR_WHITELIST
-
-CELERY_TASK_ERROR_WHITELIST
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 2.5
-
-A white list of exceptions to send error emails for.
-
-This option is pending deprecation and is scheduled for removal
-in version 3.0.

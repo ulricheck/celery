@@ -216,9 +216,6 @@ class BaseTask(object):
     send_error_emails = False
     disable_error_emails = False                            # FIXME
 
-    #: List of exception types to send error emails for.
-    error_whitelist = ()
-
     #: The name of a serializer that are registered with
     #: :mod:`kombu.serialization.registry`.  Default is `"pickle"`.
     serializer = "pickle"
