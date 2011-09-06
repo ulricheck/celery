@@ -147,8 +147,7 @@ class BaseApp(object):
 
     def send_task(self, name, args=None, kwargs=None, countdown=None,
             eta=None, task_id=None, publisher=None, connection=None,
-            connect_timeout=None, result_cls=None, expires=None,
-            queues=None, **options):
+            result_cls=None, expires=None, queues=None, **options):
         """Send task by name.
 
         :param name: Name of task to execute (e.g. `"tasks.add"`).
@@ -172,7 +171,7 @@ class BaseApp(object):
         exchange = options.get("exchange")
         exchange_type = options.get("exchange_type")
 
-        with self.default_connection(connection, connect_timeout) as conn:
+        with self.default_connection(connection) as conn:
             publish = publisher or self.amqp.TaskPublisher(conn,
                                             exchange=exchange,
                                             exchange_type=exchange_type)
@@ -231,14 +230,12 @@ class BaseApp(object):
                                            **transport_options or {}))
 
     @contextmanager
-    def default_connection(self, connection=None, connect_timeout=None):
+    def default_connection(self, connection=None):
         """For use within a with-statement to get a connection from the pool
         if one is not already provided.
 
         :keyword connection: If not provided, then a connection will be
                              acquired from the connection pool.
-        :keyword connect_timeout: *No longer used.*
-
         """
         if connection:
             yield connection
@@ -247,9 +244,8 @@ class BaseApp(object):
                 yield connection
 
     def with_default_connection(self, fun):
-        """With any function accepting `connection` and `connect_timeout`
-        keyword arguments, establishes a default connection if one is
-        not already passed to it.
+        """With any function accepting the `connection` keyword argument,
+        establishes a default connection if one is not already passed to it.
 
         Any automatically established connection will be closed after
         the function returns.

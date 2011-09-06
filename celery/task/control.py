@@ -102,7 +102,7 @@ class Control(object):
         return Inspect(self, destination=destination, timeout=timeout,
                              callback=callback)
 
-    def discard_all(self, connection=None, connect_timeout=None):
+    def discard_all(self, connection=None):
         """Discard all waiting tasks.
 
         This will ignore all tasks waiting for execution, and they will
@@ -111,7 +111,7 @@ class Control(object):
         :returns: the number of tasks discarded.
 
         """
-        with self.app.default_connection(connection, connect_timeout) as conn:
+        with self.app.default_connection(connection) as conn:
             return self.app.amqp.get_task_consumer(connection=conn)\
                                 .discard_all()
 
@@ -131,8 +131,6 @@ class Control(object):
             command to, when empty broadcast to all workers.
         :keyword connection: Custom broker connection to use, if not set,
             a connection will be established automatically.
-        :keyword connect_timeout: Timeout for new connection if a custom
-            connection is not provided.
         :keyword reply: Wait for and return the reply.
         :keyword timeout: Timeout in seconds to wait for the reply.
         :keyword limit: Limit number of replies.
@@ -152,8 +150,6 @@ class Control(object):
             command to, when empty broadcast to all workers.
         :keyword connection: Custom broker connection to use, if not set,
             a connection will be established automatically.
-        :keyword connect_timeout: Timeout for new connection if a custom
-            connection is not provided.
         :keyword reply: Wait for and return the reply.
         :keyword timeout: Timeout in seconds to wait for the reply.
         :keyword limit: Limit number of replies.
@@ -174,8 +170,6 @@ class Control(object):
             command to, when empty broadcast to all workers.
         :keyword connection: Custom broker connection to use, if not set,
             a connection will be established automatically.
-        :keyword connect_timeout: Timeout for new connection if a custom
-            connection is not provided.
         :keyword reply: Wait for and return the reply.
         :keyword timeout: Timeout in seconds to wait for the reply.
         :keyword limit: Limit number of replies.
@@ -202,8 +196,8 @@ class Control(object):
                               **kwargs)
 
     def broadcast(self, command, arguments=None, destination=None,
-            connection=None, connect_timeout=None, reply=False, timeout=1,
-            limit=None, callback=None, channel=None):
+            connection=None, reply=False, timeout=1, limit=None,
+            callback=None, channel=None):
         """Broadcast a control command to the celery workers.
 
         :param command: Name of command to send.
@@ -212,8 +206,6 @@ class Control(object):
             command to, when empty broadcast to all workers.
         :keyword connection: Custom broker connection to use, if not set,
             a connection will be established automatically.
-        :keyword connect_timeout: Timeout for new connection if a custom
-            connection is not provided.
         :keyword reply: Wait for and return the reply.
         :keyword timeout: Timeout in seconds to wait for the reply.
         :keyword limit: Limit number of replies.
@@ -221,7 +213,7 @@ class Control(object):
             received.
 
         """
-        with self.app.default_connection(connection, connect_timeout) as conn:
+        with self.app.default_connection(connection) as conn:
             if channel is None:
                 channel = conn.default_channel
             return self.mailbox(conn)._broadcast(command, arguments,

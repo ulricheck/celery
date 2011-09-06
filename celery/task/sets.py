@@ -119,15 +119,14 @@ class TaskSet(UserList):
         self.total = len(self.tasks)
         self.Publisher = Publisher or self.app.amqp.TaskPublisher
 
-    def apply_async(self, connection=None, connect_timeout=None,
-            publisher=None, taskset_id=None):
+    def apply_async(self, connection=None, publisher=None, taskset_id=None):
         """Apply taskset."""
         app = self.app
 
         if app.conf.CELERY_ALWAYS_EAGER:
             return self.apply(taskset_id=taskset_id)
 
-        with app.default_connection(connection, connect_timeout) as conn:
+        with app.default_connection(connection) as conn:
             setid = taskset_id or uuid()
             pub = publisher or self.Publisher(connection=conn)
             try:

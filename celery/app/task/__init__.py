@@ -294,7 +294,7 @@ class BaseTask(object):
 
     @classmethod
     def get_publisher(self, connection=None, exchange=None,
-            connect_timeout=None, exchange_type=None, **options):
+            exchange_type=None, **options):
         """Get a celery task message publisher.
 
         :rtype :class:`~celery.app.amqp.TaskPublisher`:
@@ -318,7 +318,7 @@ class BaseTask(object):
         exchange = self.exchange if exchange is None else exchange
         if exchange_type is None:
             exchange_type = self.exchange_type
-        connection = connection or self.establish_connection(connect_timeout)
+        connection = connection or self.establish_connection()
         return self.app.amqp.TaskPublisher(connection=connection,
                                            exchange=exchange,
                                            exchange_type=exchange_type,
@@ -326,7 +326,7 @@ class BaseTask(object):
                                            **options)
 
     @classmethod
-    def get_consumer(self, connection=None, connect_timeout=None):
+    def get_consumer(self, connection=None):
         """Get message consumer.
 
         :rtype :class:`kombu.messaging.Consumer`:
@@ -343,7 +343,7 @@ class BaseTask(object):
                 >>> consumer.connection.close()
 
         """
-        connection = connection or self.establish_connection(connect_timeout)
+        connection = connection or self.establish_connection()
         return self.app.amqp.TaskConsumer(connection=connection,
                                           exchange=self.exchange,
                                           routing_key=self.routing_key)
