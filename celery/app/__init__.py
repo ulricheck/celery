@@ -236,6 +236,7 @@ def current_app():
     return getattr(_tls, "current_app", None) or default_app
 
 
+_current_app = [None]
 def _app_or_default(app=None):
     """Returns the app provided or the default app if none.
 
@@ -245,6 +246,7 @@ def _app_or_default(app=None):
 
     """
     if app is None:
+        print("APP IS NONE")
         return getattr(_tls, "current_app", None) or default_app
     return app
 

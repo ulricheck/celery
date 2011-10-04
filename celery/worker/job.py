@@ -1,23 +1,18 @@
 from __future__ import absolute_import
 
-import os
 import sys
 import time
 import socket
-import warnings
 
 from datetime import datetime
 
-from .. import current_app
 from .. import exceptions
 from .. import platforms
 from ..app import app_or_default
-from ..datastructures import ExceptionInfo
 from ..execute.trace import TaskTrace
 from ..utils import kwdict
 from ..utils.functional import noop
 from ..utils.encoding import safe_repr, safe_str, default_encoding
-from ..utils.serialization import get_pickleable_exception
 from ..utils.text import truncate
 from ..utils.timeutils import maybe_iso8601, timezone
 
@@ -42,118 +37,18 @@ else:
         return unicode(obj, default_encoding())
 
 
-class WorkerTaskTrace(TaskTrace):
-    """Wraps the task in a jail, catches all exceptions, and
-    saves the status and result of the task execution to the task
-    meta backend.
-
-    If the call was successful, it saves the result to the task result
-    backend, and sets the task status to `"SUCCESS"`.
-
-    If the call raises :exc:`~celery.exceptions.RetryTaskError`, it extracts
-    the original exception, uses that as the result and sets the task status
-    to `"RETRY"`.
-
-    If the call results in an exception, it saves the exception as the task
-    result, and sets the task status to `"FAILURE"`.
-
-    :param task_name: The name of the task to execute.
-    :param task_id: The unique id of the task.
-    :param args: List of positional args to pass on to the function.
-    :param kwargs: Keyword arguments mapping to pass on to the function.
-
-    :keyword loader: Custom loader to use, if not specified the current app
-      loader will be used.
-    :keyword hostname: Custom hostname to use, if not specified the system
-      hostname will be used.
-
-    :returns: the evaluated functions return value on success, or
-        the exception instance on failure.
-
-    """
-
-    #: Current loader.
-    loader = None
-
-    #: Hostname to report as.
-    hostname = None
-
-    def __init__(self, *args, **kwargs):
-        self.loader = kwargs.get("loader") or current_app.loader
-        self.hostname = kwargs.get("hostname") or socket.gethostname()
-        super(WorkerTaskTrace, self).__init__(*args, **kwargs)
-
-        self._store_errors = True
-        if self.task.ignore_result:
-            self._store_errors = self.task.store_errors_even_if_ignored
-        self.super = super(WorkerTaskTrace, self)
-
-    def execute_safe(self, *args, **kwargs):
-        """Same as :meth:`execute`, but catches errors."""
-        try:
-            return self.execute(*args, **kwargs)
-        except Exception, exc:
-            _type, _value, _tb = sys.exc_info()
-            _value = self.task.backend.prepare_exception(exc)
-            exc_info = ExceptionInfo((_type, _value, _tb))
-            warnings.warn("Exception outside body: %s: %s\n%s" % tuple(
-                map(str, (exc.__class__, exc, exc_info.traceback))))
-            return exc_info
-
-    def execute(self):
-        """Execute, trace and store the result of the task."""
-        self.loader.on_task_init(self.task_id, self.task)
-        if self.task.track_started:
-            if not self.task.ignore_result:
-                self.task.backend.mark_as_started(self.task_id,
-                                                  pid=os.getpid(),
-                                                  hostname=self.hostname)
-        try:
-            return super(WorkerTaskTrace, self).execute()
-        finally:
-            try:
-                self.task.backend.process_cleanup()
-                self.loader.on_process_cleanup()
-            except (KeyboardInterrupt, SystemExit, MemoryError):
-                raise
-            except Exception, exc:
-                logger = current_app.log.get_default_logger()
-                logger.error("Process cleanup failed: %r", exc,
-                             exc_info=sys.exc_info())
-
-    def handle_success(self, retval, *args):
-        """Handle successful execution."""
-        if not self.task.ignore_result:
-            self.task.backend.mark_as_done(self.task_id, retval)
-        return self.super.handle_success(retval, *args)
-
-    def handle_retry(self, exc, type_, tb, strtb):
-        """Handle retry exception."""
-        message, orig_exc = exc.args
-        if self._store_errors:
-            self.task.backend.mark_as_retry(self.task_id, orig_exc, strtb)
-        return self.super.handle_retry(exc, type_, tb, strtb)
-
-    def handle_failure(self, exc, type_, tb, strtb):
-        """Handle exception."""
-        if self._store_errors:
-            self.task.backend.mark_as_failure(self.task_id, exc, strtb)
-        exc = get_pickleable_exception(exc)
-        return self.super.handle_failure(exc, type_, tb, strtb)
-
-
 def execute_and_trace(task_name, *args, **kwargs):
     """This is a pickleable method used as a target when applying to pools.
 
     It's the same as::
 
-        >>> WorkerTaskTrace(task_name, *args, **kwargs).execute_safe()
+        >>> TaskTrace(task_name, *args, **kwargs).execute_safe()
 
     """
     hostname = kwargs.get("hostname")
     platforms.set_mp_process_title("celeryd", task_name, hostname=hostname)
     try:
-        return WorkerTaskTrace(task_name, *args, **kwargs).execute_safe()
+        return TaskTrace(task_name, *args, **kwargs).execute_safe()
     finally:
         platforms.set_mp_process_title("celeryd", "-idle-", hostname)
 
@@ -230,7 +125,7 @@ class TaskRequest(object):
             on_ack=noop, retries=0, delivery_info=None, hostname=None,
             logger=None, eventer=None, eta=None, expires=None, app=None,
             taskset_id=None, chord=None, tz=0x1, **opts):
-        self.app = app_or_default(app)
+        app = self.app = app_or_default(app)
         self.task_name = task_name
         self.task_id = task_id
         self.taskset_id = taskset_id
@@ -243,10 +138,10 @@ class TaskRequest(object):
         self.on_ack = on_ack
         self.delivery_info = {} if delivery_info is None else delivery_info
         self.hostname = hostname or socket.gethostname()
-        self.logger = logger or self.app.log.get_default_logger()
+        self.logger = logger or app.log.get_default_logger()
         self.eventer = eventer
 
-        self.task = self.app.tasks[self.task_name]
+        self.task = app.tasks[self.task_name]
         self._store_errors = True
         if self.task.ignore_result:
             self._store_errors = self.task.store_errors_even_if_ignored
@@ -269,8 +164,8 @@ class TaskRequest(object):
 
         """
         delivery_info = getattr(message, "delivery_info", {})
-        delivery_info = dict((key, delivery_info.get(key))
-                                for key in WANTED_DELIVERY_INFO)
+        delivery_info = {key: delivery_info.get(key)
+                            for key in WANTED_DELIVERY_INFO}
 
         kwargs = body["kwargs"]
         if not hasattr(kwargs, "items"):
@@ -311,11 +206,16 @@ class TaskRequest(object):
             return
 
         instance_attrs = self.get_instance_attrs(loglevel, logfile)
+        #self.on_accepted(os.getpid(), time.time())
+        #r = self.task(*self.args, **self.kwargs)
+        #self.on_success(r)
+        #return r
         result = pool.apply_async(execute_and_trace,
                                   args=(self.task_name, self.task_id,
                                         self.args, self.kwargs),
                                   kwargs={"hostname": self.hostname,
-                                          "request": instance_attrs},
+                                          "request": instance_attrs,
+                                          "task": self.task},
                                   accept_callback=self.on_accepted,
                                   timeout_callback=self.on_timeout,
                                   callback=self.on_success,
@@ -325,7 +225,7 @@ class TaskRequest(object):
         return result
 
     def execute(self, loglevel=None, logfile=None):
-        """Execute the task in a :class:`WorkerTaskTrace`.
+        """Execute the task in a :class:`TaskTrace`.
 
         :keyword loglevel: The loglevel used by the task.
 
@@ -340,11 +240,12 @@ class TaskRequest(object):
             self.acknowledge()
 
         instance_attrs = self.get_instance_attrs(loglevel, logfile)
-        tracer = WorkerTaskTrace(self.task_name, self.task_id,
-                                 self.args, self.kwargs,
-                                 **{"hostname": self.hostname,
-                                    "loader": self.app.loader,
-                                    "request": instance_attrs})
+        tracer = TaskTrace(self.task_name, self.task_id,
+                           self.args, self.kwargs,
+                           **{"hostname": self.hostname,
+                              "loader": self.app.loader,
+                              "request": instance_attrs,
+                              "task": self.task})
         retval = tracer.execute()
         self.acknowledge()
         return retval

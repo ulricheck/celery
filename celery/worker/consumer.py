@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import with_statement
-
 """
 
 This module contains the component responsible for consuming messages
@@ -70,11 +67,16 @@ up and running.
   early, *then* close the connection.
 
 """
+from __future__ import absolute_import
+from __future__ import with_statement
+
 import socket
 import sys
 import threading
 import traceback
 import warnings
+
+from functools import partial
 
 from ..app import app_or_default
 from ..datastructures import AttributeDict
@@ -87,6 +89,7 @@ from . import state
 from .job import TaskRequest, InvalidTaskError
 from .control.registry import Panel
 from .heartbeat import Heart
+
 
 RUN = 0x1
 CLOSE = 0x2
@@ -258,7 +261,7 @@ class Consumer(object):
             init_callback=noop, send_events=False, hostname=None,
             initial_prefetch_count=2, pool=None, app=None,
             priority_timer=None, controller=None):
-        self.app = app_or_default(app)
+        app = self.app = app_or_default(app)
         self.connection = None
         self.task_consumer = None
         self.controller = controller
@@ -285,6 +288,16 @@ class Consumer(object):
         conninfo = self.app.broker_connection()
         self.connection_errors = conninfo.connection_errors
         self.channel_errors = conninfo.channel_errors
+        self.strategies = {}
+
+    def update_strat(self, eventer):
+        self.strategies.clear()
+        from .strategy import Strategy
+        for task in self.app.tasks.itervalues():
+            s = Strategy(task, self.logger, hostname=self.hostname,
+                         event_dispatcher=eventer)()
+            s.next()
+            self.strategies[task.name] = s
 
     def start(self):
         """Start the consumer.
@@ -331,12 +344,12 @@ class Consumer(object):
 
         """
 
+
+        self.logger.info("Got task from broker: %s", task.shortinfo())
         if task.revoked():
             return
 
-        self.logger.info("Got task from broker: %s", task.shortinfo())
-
-        if self.event_dispatcher.enabled:
+        if self.event_dispatcher and self.event_dispatcher.enabled:
             self.event_dispatcher.send("task-received", uuid=task.task_id,
                     name=task.task_name, args=safe_repr(task.args),
                     kwargs=safe_repr(task.kwargs), retries=task.retries,
@@ -385,6 +398,16 @@ class Consumer(object):
                                      safe_repr(message.content_encoding),
                                      safe_repr(message.delivery_info))
 
+    def _ack_task(self, message):
+        try:
+            message.ack()
+        except self.connection_errors + (AttributeError, ), exc:
+            self.logger.critical(
+                "Couldn't ack %r: %s reason:%r",
+                    message.delivery_tag,
+                    self._message_report(message.payload, message), exc)
+
+    xx =0
     def receive_message(self, body, message):
         """Handles incoming messages.
 
@@ -392,19 +415,12 @@ class Consumer(object):
         :param message: The kombu message object.
 
         """
+        self.xx += 1
+        #print("R: %r" % (self.xx, ))
         # need to guard against errors occurring while acking the message.
-        def ack():
-            try:
-                message.ack()
-            except self.connection_errors + (AttributeError, ), exc:
-                self.logger.critical(
-                    "Couldn't ack %r: %s reason:%r",
-                        message.delivery_tag,
-                        self._message_report(body, message), exc)
+        ack = partial(self._ack_task, message)
 
-        try:
-            body["task"]
-        except (KeyError, TypeError):
+        if not hasattr(body, "__getitem__") or "task" not in body:
             warnings.warn(RuntimeWarning(
                 "Received and deleted unknown message. Wrong destination?!? \
                 the full contents of the message body was: %s" % (
@@ -413,11 +429,12 @@ class Consumer(object):
             return
 
         try:
-            task = TaskRequest.from_message(message, body, ack,
-                                            app=self.app,
-                                            logger=self.logger,
-                                            hostname=self.hostname,
-                                            eventer=self.event_dispatcher)
+            self.strategies[body["task"]].send((body, message, ack))
+            #task = TaskRequest.from_message(message, body, ack,
+            #                                app=self.app,
+            #                                logger=self.logger,
+            #                                hostname=self.hostname,
+            #                                eventer=self.event_dispatcher)
 
         except NotRegistered, exc:
             self.logger.error(UNKNOWN_TASK_ERROR, exc, safe_repr(body),
@@ -427,8 +444,12 @@ class Consumer(object):
             self.logger.error(INVALID_TASK_ERROR, str(exc), safe_repr(body),
                               exc_info=sys.exc_info())
             ack()
+        except Exception, exc:
+            print("ERROR: %r" % (exc, ))
+            raise
         else:
-            self.on_task(task)
+            pass
+            #self.on_task(task)
 
     def maybe_conn_error(self, fun):
         """Applies function but ignores any connection or channel
@@ -574,6 +595,7 @@ class Consumer(object):
         if prev_event_dispatcher:
             self.event_dispatcher.copy_buffer(prev_event_dispatcher)
             self.event_dispatcher.flush()
+        self.update_strat(self.event_dispatcher)
 
         # Restart heartbeat thread.
         self.restart_heartbeat()

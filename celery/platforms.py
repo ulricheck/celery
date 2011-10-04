@@ -371,6 +371,8 @@ def set_mp_process_title(progname, info=None, hostname=None):
     Only works if :mod:`setproctitle` is installed.
 
     """
+    set_process_title(progname, info=info)
+    return
     if hostname:
         progname = "%s@%s" % (progname, hostname.split(".")[0])
     try:

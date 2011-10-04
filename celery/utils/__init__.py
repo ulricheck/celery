@@ -19,6 +19,9 @@ from .encoding import safe_repr as _safe_repr
 from .imports import get_full_cls_name
 from .log import LOG_LEVELS  # noqa
 
+def kwdict(d):
+    return d
+
 PENDING_DEPRECATION_FMT = """
     %(description)s is scheduled for deprecation in \
     version %(deprecation)s and removal in version v%(removal)s. \
