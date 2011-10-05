@@ -1,6 +1,7 @@
 from ..datastructures import AttributeDict
 from ..utils import kwdict
 from ..utils.timeutils import timezone, maybe_iso8601
+from ..execute.trace import TaskTrace
 
 from . import state
 from .job import WANTED_DELIVERY_INFO, InvalidTaskError
@@ -72,11 +73,26 @@ class Strategy(object):
 
     def __call__(self):
         task = self.task
+        name = task.name
         app = self.app
+        loader = app.loader
+        hostname = self.hostname
+        store_errors = True
+        tzlocal = timezone.tz_or_local(app.conf.CELERY_TIMEZONE)
+        to_local = timezone.to_local
+        evd = self.event_dispatcher
+        acks_late = task.acks_late
+        if task.ignore_result:
+            store_errors = task.store_errors_even_if_ignored
         xx = 0
+
+        reserved = state.task_reserved
+        accepted = state.task_accepted
+        ready = state.task_ready
 
         while 1:
             (body, message, on_ack) = (yield)
+            get = body.get
             delivery_info = getattr(message, "delivery_info", {})
             delivery_info = dict((key, delivery_info.get(key))
                                     for key in WANTED_DELIVERY_INFO)
@@ -85,50 +101,44 @@ class Strategy(object):
             if not hasattr(kwargs, "items"):
                 raise InvalidTaskError("Task keyword arguments is not a mapping.")
 
-            eta = maybe_iso8601(body.get("eta"))
-            expires = maybe_iso8601(body.get("expires"))
-            tz = body.get("tz", None)
-            tzlocal = timezone.tz_or_local(app.conf.CELERY_TIMEZONE)
+            eta = maybe_iso8601(get("eta"))
+            expires = maybe_iso8601(get("expires"))
+            tz = get("tz", None)
             if eta is not None:
-                eta = timezone.to_local(eta, tzlocal, tz)
+                eta = to_local(eta, tzlocal, tz)
             if expires is not None:
-                expires = timezone.to_local(expires, tzlocal, tz)
+                expires = to_local(expires, tzlocal, tz)
 
-
-            store_errors = True
-            if task.ignore_result:
-                store_errors = task.store_errors_even_if_ignored
-
-            request = {"name": task.name,
+            request = {"name": name,
                     "id": body["id"],
-                    "taskset": body.get("taskset", None),
+                    "taskset": get("taskset", None),
                     "args": body["args"],
                     "kwargs": kwdict(kwargs),
-                    "chord": body.get("chord"),
-                    "retries": body.get("retries", 0),
+                    "chord": get("chord"),
+                    "retries": get("retries", 0),
                     "eta": eta,
                     "expires": expires,
                     "delivery_info": delivery_info,
-                    "tz": body.get("tz", None),
+                    "tz": get("tz", None),
                     "tzlocal": tzlocal,
                     "is_eager": False,
                     "tz": tz}
-            request = Request(task, request, on_ack, self.event_dispatcher)
+            request = Request(task, request, on_ack, evd)
 
             if not request.revoked():
-                state.task_reserved(request)
-                if not task.acks_late:
+                reserved(request)
+                if not acks_late:
                     request.acknowledge()
 
-                state.task_accepted(request)
+                accepted(request)
                 try:
-                    task.request.update(request)
-                    #t = WorkerTaskTrace(task.name, request.id,
-                    #        request.args, request.kwargs,
-                    #        hostname=request.hostname,
-                    #        loader=app.loader,
-                    #        request=request)
-                    #yield t.execute()
-                    task(*request["args"], **request["kwargs"])
+                    t = TaskTrace(name, request["id"],
+                            request["args"], request["kwargs"],
+                            hostname=hostname,
+                            loader=loader,
+                            request=request)
+                    t.execute()
+                    #task.request.update(request)
+                    #task(*request["args"], **request["kwargs"])
                 finally:
-                    state.task_ready(request)
+                    ready(request)
