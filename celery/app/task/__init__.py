@@ -25,6 +25,10 @@ from ...utils import (fun_takes_kwargs, instantiate,
                       mattrgetter, uuid, maybe_reraise)
 from ...utils.mail import ErrorMail
 
+COMPAT_CLASSMETHODS = ("get_logger", "establish_connection",
+                       "get_publisher", "get_consumer", "delay",
+                       "apply_async", "apply", "AsyncResult")
+
 extract_exec_options = mattrgetter("queue", "routing_key",
                                    "exchange", "immediate",
                                    "mandatory", "priority",
@@ -95,7 +99,21 @@ class TaskType(type):
                 # Fix for manage.py shell_plus (Issue #366).
                 module_name = task_module
             attrs["name"] = '.'.join([module_name, name])
+            attrs["name"] = '.'.join(filter(None, [module_name, name]))
             autoname = True
+
+        # - Generate compat classmethods (remove in 3.0) -
+        magic_kwargs = attrs.get("accept_magic_kwargs")
+        if magic_kwargs is None:
+            try:
+                magic_kwargs = getattr(bases[0], "accept_magic_kwargs")
+            except AttributeError:
+                pass
+        if magic_kwargs:
+            for meth in COMPAT_CLASSMETHODS:
+                if meth not in attrs:
+                    attrs[meth] = classmethod(fun_of_method(
+                                    getattr(BaseTask, meth)))
 
         # - Automatically generate __call__.
         # If this or none of its bases define __call__, we simply
@@ -276,6 +294,10 @@ class BaseTask(object):
     #: Execution strategy used, or the qualified name of one.
     Strategy = "celery.worker.strategy:default"
 
+    #: If the task is a method (as apposed to a plain function),
+    #: this is the instance it is bound to.
+    __self__ = None
+
     def __reduce__(self):
         return (_unpickle_task, (self.name, ), None)
 
@@ -286,7 +308,6 @@ class BaseTask(object):
     def start_strategy(self, app, consumer):
         return instantiate(self.Strategy, self, app, consumer)
 
-    @classmethod
     def get_logger(self, loglevel=None, logfile=None, propagate=False,
             **kwargs):
         """Get task-aware logger object."""
@@ -295,12 +316,10 @@ class BaseTask(object):
             logfile=self.request.logfile if logfile is None else logfile,
             propagate=propagate, task_name=self.name, task_id=self.request.id)
 
-    @classmethod
     def establish_connection(self, connect_timeout=None):
         """Establish a connection to the message broker."""
         return self.app.broker_connection(connect_timeout=connect_timeout)
 
-    @classmethod
     def get_publisher(self, connection=None, exchange=None,
             connect_timeout=None, exchange_type=None, **options):
         """Get a celery task message publisher.
@@ -333,7 +352,6 @@ class BaseTask(object):
                                            routing_key=self.routing_key,
                                            **options)
 
-    @classmethod
     def get_consumer(self, connection=None, connect_timeout=None):
         """Get message consumer.
 
@@ -356,7 +374,6 @@ class BaseTask(object):
                                           exchange=self.exchange,
                                           routing_key=self.routing_key)
 
-    @classmethod
     def delay(self, *args, **kwargs):
         """Star argument version of :meth:`apply_async`.
 
@@ -370,7 +387,6 @@ class BaseTask(object):
         """
         return self.apply_async(args, kwargs)
 
-    @classmethod
     def apply_async(self, args=None, kwargs=None,
             task_id=None, publisher=None, connection=None,
             router=None, queues=None, **options):
@@ -459,6 +475,10 @@ class BaseTask(object):
         router = self.app.amqp.Router(queues)
         conf = self.app.conf
 
+        # add 'self' if this is a bound method.
+        if self.__self__ is not None:
+            args = (self.__self__, ) + tuple(args)
+
         if conf.CELERY_ALWAYS_EAGER:
             return self.apply(args, kwargs, task_id=task_id, **options)
         options = dict(extract_exec_options(self), **options)
@@ -481,7 +501,6 @@ class BaseTask(object):
 
         return self.AsyncResult(task_id)
 
-    @classmethod
     def retry(self, args=None, kwargs=None, exc=None, throw=True,
             eta=None, countdown=None, max_retries=None, **options):
         """Retry the task.
@@ -569,7 +588,6 @@ class BaseTask(object):
                 eta and "Retry at %s" % (eta, )
                      or "Retry in %s secs." % (countdown, ), exc)
 
-    @classmethod
     def apply(self, args=None, kwargs=None, **options):
         """Execute this task locally, by blocking until the task returns.
 
@@ -621,7 +639,6 @@ class BaseTask(object):
             state, tb = info.state, info.strtb
         return EagerResult(task_id, retval, state, traceback=tb)
 
-    @classmethod
     def AsyncResult(self, task_id):
         """Get AsyncResult instance for this kind of task.
 
@@ -735,13 +752,12 @@ class BaseTask(object):
         """`repr(task)`"""
         return "<@task: %s>" % (self.name, )
 
-    @classmethod
-    def subtask(cls, *args, **kwargs):
+    def subtask(self, *args, **kwargs):
         """Returns :class:`~celery.task.sets.subtask` object for
         this task, wrapping arguments and execution options
         for a single task invocation."""
         from ...task.sets import subtask
-        return subtask(cls, *args, **kwargs)
+        return subtask(self, *args, **kwargs)
 
     @property
     def __name__(self):

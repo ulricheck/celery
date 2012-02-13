@@ -15,6 +15,8 @@ from __future__ import absolute_import
 import os
 import threading
 
+from inspect import getargspec
+
 from .. import registry
 from ..utils import cached_property, instantiate
 
@@ -168,6 +170,16 @@ class App(base.BaseApp):
 
             def _create_task_cls(fun):
                 base = options.pop("base", None) or self.Task
+
+                # - this is the only way to know if this is a method
+                argspec = getargspec(fun)[0]
+                if argspec and argspec[0] == 'self':
+
+                        def __get__(self, obj, type=None):
+                            if obj is not None:
+                                self.__self__ = obj
+                            return self
+                        options["__get__"] = __get__
 
                 T = type(fun.__name__, (base, ), dict({
                         "app": self,

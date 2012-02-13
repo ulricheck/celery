@@ -25,7 +25,10 @@ try:
 except ImportError:
     from collections import UserDict    # noqa
 
-if sys.version_info >= (3, 0):
+
+is_py3k = sys.version_info >= (3, 0)
+
+if is_py3k:
     from io import StringIO, BytesIO
     from .encoding import bytes_to_str
 
@@ -39,6 +42,17 @@ else:
     except ImportError:
         from StringIO import StringIO   # noqa
     BytesIO = WhateverIO = StringIO     # noqa
+
+
+if is_py3k:
+
+    def fun_of_method(met):
+        return met.__func__
+
+else:
+
+    def fun_of_method(met):  # noqa
+        return met.im_func
 
 
 ############## collections.OrderedDict ######################################
