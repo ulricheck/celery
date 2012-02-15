@@ -23,6 +23,7 @@ from ...registry import tasks, _unpickle_task
 from ...result import EagerResult
 from ...utils import (fun_takes_kwargs, instantiate,
                       mattrgetter, uuid, maybe_reraise)
+from ...utils.compat import fun_of_method
 from ...utils.mail import ErrorMail
 
 COMPAT_CLASSMETHODS = ("get_logger", "establish_connection",

@@ -59,6 +59,7 @@ class RaisingTask(task.Task):
 class RetryTask(task.Task):
     max_retries = 3
     iterations = 0
+    accept_magic_kwargs = True
 
     def run(self, arg1, arg2, kwarg=1, max_retries=None, care=True):
         self.__class__.iterations += 1
@@ -74,6 +75,7 @@ class RetryTask(task.Task):
 class RetryTaskNoArgs(task.Task):
     max_retries = 3
     iterations = 0
+    accept_magic_kwargs = True
 
     def run(self, **kwargs):
         self.__class__.iterations += 1
@@ -89,6 +91,7 @@ class RetryTaskMockApply(task.Task):
     max_retries = 3
     iterations = 0
     applied = 0
+    accept_magic_kwargs = True
 
     def run(self, arg1, arg2, kwarg=1, **kwargs):
         self.__class__.iterations += 1
@@ -112,6 +115,7 @@ class MyCustomException(Exception):
 class RetryTaskCustomExc(task.Task):
     max_retries = 3
     iterations = 0
+    accept_magic_kwargs = True
 
     def run(self, arg1, arg2, kwarg=1, **kwargs):
         self.__class__.iterations += 1
