@@ -3,8 +3,7 @@ from sys import exit, stderr
 
 from celery.app.defaults import DEFAULTS
 
-ignore = frozenset(["CELERYD_POOL_PUTLOCKS",
-                    "CELERY_AMQP_TASK_RESULT_CONNECTION_MAX"])
+ignore = frozenset(["CELERYD_POOL_PUTLOCKS"])
 
 
 def find_undocumented_settings(directive=".. setting:: "):
