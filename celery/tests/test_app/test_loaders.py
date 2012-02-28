@@ -68,16 +68,6 @@ class TestLoaders(AppCase):
         self.assertEqual(loaders.get_loader_cls("default"),
                           default.Loader)
 
-    def test_current_loader(self):
-        with self.assertWarnsRegex(CPendingDeprecationWarning,
-                r'deprecation'):
-            self.assertIs(loaders.current_loader(), self.app.loader)
-
-    def test_load_settings(self):
-        with self.assertWarnsRegex(CPendingDeprecationWarning,
-                r'deprecation'):
-            self.assertIs(loaders.load_settings(), self.app.conf)
-
 
 class TestLoaderBase(Case):
     message_options = {"subject": "Subject",
