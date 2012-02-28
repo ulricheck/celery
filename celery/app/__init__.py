@@ -151,12 +151,14 @@ class App(base.BaseApp):
 
         .. code-block:: python
 
+            from celery.task import current
+
             @task(exchange="feeds")
-            def refresh_feed(url, **kwargs):
+            def refresh_feed(url):
                 try:
                     return Feed.objects.get(url=url).refresh()
                 except socket.error, exc:
-                    refresh_feed.retry(args=[url], kwargs=kwargs, exc=exc)
+                    current.retry(exc=exc)
 
         Calling the resulting task:
 
