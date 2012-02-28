@@ -102,7 +102,7 @@ class PIDFile(object):
         """Acquire lock."""
         try:
             self.write_pid()
-        except OSError, exc:
+        except OSError as exc:
             raise LockFailed, LockFailed(str(exc)), sys.exc_info()[2]
         return self
     __enter__ = acquire
@@ -120,7 +120,7 @@ class PIDFile(object):
         """Reads and returns the current pid."""
         try:
             fh = open(self.path, "r")
-        except IOError, exc:
+        except IOError as exc:
             if exc.errno == errno.ENOENT:
                 return
             raise
@@ -137,7 +137,7 @@ class PIDFile(object):
         """Removes the lock."""
         try:
             os.unlink(self.path)
-        except OSError, exc:
+        except OSError as exc:
             if exc.errno in (errno.ENOENT, errno.EACCES):
                 return
             raise
@@ -147,7 +147,7 @@ class PIDFile(object):
         (does not respond to signals)."""
         try:
             pid = self.read_pid()
-        except ValueError, exc:
+        except ValueError as exc:
             sys.stderr.write("Broken pidfile found. Removing it.\n")
             self.remove()
             return True
@@ -157,7 +157,7 @@ class PIDFile(object):
 
         try:
             os.kill(pid, 0)
-        except os.error, exc:
+        except os.error as exc:
             if exc.errno == errno.ESRCH:
                 sys.stderr.write("Stale pidfile exists. Removing it.\n")
                 self.remove()
@@ -229,7 +229,7 @@ class DaemonContext(object):
             for fd in reversed(range(get_fdmax(default=2048))):
                 try:
                     os.close(fd)
-                except OSError, exc:
+                except OSError as exc:
                     if exc.errno != errno.EBADF:
                         raise
 
@@ -359,7 +359,7 @@ def _setgroups_hack(groups):
             if len(groups) <= 1:
                 raise
             groups[:] = groups[:-1]
-        except OSError, exc:  # error from the OS.
+        except OSError as exc:  # error from the OS.
             if exc.errno != errno.EINVAL or len(groups) <= 1:
                 raise
             groups[:] = groups[:-1]
@@ -373,7 +373,7 @@ def setgroups(groups):
         pass
     try:
         return _setgroups_hack(groups[:max_groups])
-    except OSError, exc:
+    except OSError as exc:
         if exc.errno != errno.EPERM:
             raise
         if any(group not in groups for group in os.getgroups()):

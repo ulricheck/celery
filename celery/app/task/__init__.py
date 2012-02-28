@@ -511,7 +511,7 @@ class BaseTask(object):
             ...     twitter = Twitter(oauth=auth)
             ...     try:
             ...         twitter.post_status_update(message)
-            ...     except twitter.FailWhale, exc:
+            ...     except twitter.FailWhale as exc:
             ...         # Retry in 5 minutes.
             ...         return tweet.retry(countdown=60 * 5, exc=exc)
 

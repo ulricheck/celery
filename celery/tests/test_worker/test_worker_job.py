@@ -95,7 +95,7 @@ class test_RetryTaskError(Case):
     def test_retry_task_error(self):
         try:
             raise Exception("foo")
-        except Exception, exc:
+        except Exception as exc:
             ret = RetryTaskError("Retrying task", exc)
             self.assertEqual(ret.exc, exc)
 

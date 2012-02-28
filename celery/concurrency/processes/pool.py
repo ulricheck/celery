@@ -74,7 +74,7 @@ def safe_apply_callback(fun, *args):
     if fun:
         try:
             fun(*args)
-        except BaseException, exc:
+        except BaseException as exc:
             error("Pool callback raised exception: %r", exc,
                   exc_info=sys.exc_info())
 
@@ -213,7 +213,7 @@ def worker(inqueue, outqueue, initializer=None, initargs=(),
             result = (False, ExceptionInfo(sys.exc_info()))
         try:
             put((READY, (job, i, result)))
-        except Exception, exc:
+        except Exception as exc:
             _, _, tb = sys.exc_info()
             wrapped = MaybeEncodingError(exc, result[1])
             einfo = ExceptionInfo((MaybeEncodingError, wrapped, tb))
@@ -237,7 +237,7 @@ class PoolThread(threading.Thread):
     def run(self):
         try:
             return self.body()
-        except Exception, exc:
+        except Exception as exc:
             error("Thread %r crashed: %r" % (self.__class__.__name__, exc, ),
                   exc_info=sys.exc_info())
             os._exit(1)
@@ -352,7 +352,7 @@ class TimeoutHandler(PoolThread):
 
             try:
                 os.kill(job._worker_pid, SIG_SOFT_TIMEOUT)
-            except OSError, exc:
+            except OSError as exc:
                 if exc.errno == errno.ESRCH:
                     pass
                 else:
@@ -459,7 +459,7 @@ class ResultHandler(PoolThread):
         while 1:
             try:
                 ready, task = poll(1.0)
-            except (IOError, EOFError), exc:
+            except (IOError, EOFError) as exc:
                 debug('result handler got %r -- exiting' % (exc, ))
                 return
 
@@ -479,7 +479,7 @@ class ResultHandler(PoolThread):
         while cache and self._state != TERMINATE:
             try:
                 ready, task = poll(1.0)
-            except (IOError, EOFError), exc:
+            except (IOError, EOFError) as exc:
                 debug('result handler got %r -- exiting' % (exc, ))
                 return
 

@@ -111,7 +111,7 @@ class Autoscaler(bgThread):
         except ValueError:
             self.logger.debug(
                 "Autoscaler won't scale down: all processes busy.")
-        except Exception, exc:
+        except Exception as exc:
             self.logger.error("Autoscaler: scale_down: %r\n%r",
                                 exc, traceback.format_stack(),
                                 exc_info=sys.exc_info())

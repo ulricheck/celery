@@ -45,11 +45,11 @@ def get_redis_or_SkipTest():
         try:
             # Evaluate lazy connection
             tb.client.info()
-        except ConnectionError, exc:
+        except ConnectionError as exc:
             emit_no_redis_msg("not running")
             raise SkipTest("can't connect to redis: %s" % (exc, ))
         return tb
-    except ImproperlyConfigured, exc:
+    except ImproperlyConfigured as exc:
         if "need to install" in str(exc):
             return emit_no_redis_msg("not installed")
         return emit_no_redis_msg("not configured")
@@ -86,7 +86,7 @@ class TestRedisBackend(Case):
         tid3 = uuid()
         try:
             raise KeyError("foo")
-        except KeyError, exception:
+        except KeyError as exception:
             pass
         tb.mark_as_failure(tid3, exception)
         self.assertEqual(tb.get_status(tid3), states.FAILURE)

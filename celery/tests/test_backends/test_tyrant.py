@@ -39,11 +39,11 @@ def get_tyrant_or_SkipTest():
         tb = TyrantBackend()
         try:
             tb.open()
-        except socket.error, exc:
+        except socket.error as exc:
             emit_no_tyrant_msg("not running")
             raise SkipTest("Can't connect to Tokyo server: %s" % (exc, ))
         return tb
-    except ImproperlyConfigured, exc:
+    except ImproperlyConfigured as exc:
         if "need to install" in str(exc):
             emit_no_tyrant_msg("not installed")
             raise SkipTest("Tokyo Tyrant is not installed")
@@ -91,7 +91,7 @@ class TestTyrantBackend(Case):
         tid3 = uuid()
         try:
             raise KeyError("foo")
-        except KeyError, exception:
+        except KeyError as exception:
             pass
         tb.mark_as_failure(tid3, exception)
         self.assertEqual(tb.get_status(tid3), states.FAILURE)

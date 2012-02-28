@@ -32,7 +32,7 @@ def get_backend_cls(backend=None, loader=None):
     aliases = dict(BACKEND_ALIASES, **loader.override_backends)
     try:
         return get_cls_by_name(backend, aliases)
-    except ValueError, exc:
+    except ValueError as exc:
         raise ValueError, ValueError(UNKNOWN_BACKEND % (
                     backend, exc)), sys.exc_info()[2]
 

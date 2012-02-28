@@ -187,7 +187,7 @@ class Timer(Thread):
     def apply_entry(self, entry):
         try:
             entry()
-        except Exception, exc:
+        except Exception as exc:
             if not self.schedule.handle_error(sys.exc_info()):
                 warnings.warn(TimedFunctionFailed(repr(exc))),
                 traceback.print_stack()
@@ -221,7 +221,7 @@ class Timer(Thread):
                 # we lost the race at interpreter shutdown,
                 # so gc collected built-in modules.
                 pass
-        except Exception, exc:
+        except Exception as exc:
             self.logger.error("Thread Timer crashed: %r", exc,
                               exc_info=sys.exc_info())
             os._exit(1)

@@ -85,7 +85,7 @@ class Beat(configurated):
         try:
             self.install_sync_handler(beat)
             beat.start()
-        except Exception, exc:
+        except Exception as exc:
             logger.critical("celerybeat raised exception %s: %r\n%s",
                             exc.__class__, exc, traceback.format_exc(),
                             exc_info=sys.exc_info())

@@ -48,7 +48,7 @@ class bgThread(Thread):
         while not shutdown.is_set():
             try:
                 self.body()
-            except Exception, exc:
+            except Exception as exc:
                 self.on_crash(sys.exc_info(), "%r crashed: %r", self.name, exc)
                 # exiting by normal means does not work here, so force exit.
                 os._exit(1)

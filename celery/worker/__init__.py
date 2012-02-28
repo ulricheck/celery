@@ -225,7 +225,7 @@ class WorkController(configurated):
                 self.logger.debug("%s OK!", qualname(component))
         except SystemTerminate:
             self.terminate()
-        except Exception, exc:
+        except Exception as exc:
             self.logger.error("Unrecoverable error: %r" % (exc, ),
                               exc_info=sys.exc_info())
             self.stop()
@@ -241,14 +241,14 @@ class WorkController(configurated):
         try:
             request.task.execute(request, self.pool,
                                  self.loglevel, self.logfile)
-        except Exception, exc:
+        except Exception as exc:
             self.logger.critical("Internal error %s: %s\n%s",
                                  exc.__class__, exc, traceback.format_exc(),
                                  exc_info=True)
         except SystemTerminate:
             self.terminate()
             raise
-        except BaseException, exc:
+        except BaseException as exc:
             self.stop()
             raise exc
 

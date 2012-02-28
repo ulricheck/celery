@@ -101,7 +101,7 @@ class CassandraBackend(BaseDictBackend):
                     pycassa.UnavailableException,
                     socket.error,
                     socket.timeout,
-                    Thrift.TException), exc:
+                    Thrift.TException) as exc:
                 if time.time() > ts:
                     raise
                 self.logger.warn('Cassandra error: %r. Retrying...', exc)

@@ -69,7 +69,7 @@ def extract_response(raw_response):
         raise InvalidResponseError("Empty response")
     try:
         payload = deserialize(raw_response)
-    except ValueError, exc:
+    except ValueError as exc:
         raise InvalidResponseError, InvalidResponseError(
                 str(exc)), sys.exc_info()[2]
 

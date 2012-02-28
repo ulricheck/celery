@@ -43,7 +43,7 @@ def periodic_task(*args, **options):
                 def refresh_feed(url):
                     try:
                         return Feed.objects.get(url=url).refresh()
-                    except socket.error, exc:
+                    except socket.error as exc:
                         refresh_feed.retry(exc=exc)
 
             Calling the resulting task:

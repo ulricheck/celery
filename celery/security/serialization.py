@@ -44,7 +44,7 @@ class SecureSerializer(object):
             return self._pack(body, content_type, content_encoding,
                               signature=self._key.sign(body, self._digest),
                               signer=self._cert.get_id())
-        except Exception, exc:
+        except Exception as exc:
             raise SecurityError, SecurityError(
                     "Unable to serialize: %r" % (exc, )), sys.exc_info()[2]
 
@@ -58,7 +58,7 @@ class SecureSerializer(object):
                                        payload["body"])
             self._cert_store[signer].verify(body,
                                             signature, self._digest)
-        except Exception, exc:
+        except Exception as exc:
             raise SecurityError, SecurityError(
                     "Unable to deserialize: %r" % (exc, )), sys.exc_info()[2]
 

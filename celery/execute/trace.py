@@ -151,17 +151,17 @@ def build_tracer(name, task, loader=None, hostname=None, store_errors=True,
                 try:
                     R = retval = task(*args, **kwargs)
                     state, einfo = SUCCESS, None
-                except RetryTaskError, exc:
+                except RetryTaskError as exc:
                     I = Info(RETRY, exc, sys.exc_info())
                     state, retval, einfo = I.state, I.retval, I.exc_info
                     R = I.handle_error_state(task, eager=eager)
-                except Exception, exc:
+                except Exception as exc:
                     if propagate:
                         raise
                     I = Info(FAILURE, exc, sys.exc_info())
                     state, retval, einfo = I.state, I.retval, I.exc_info
                     R = I.handle_error_state(task, eager=eager)
-                except BaseException, exc:
+                except BaseException as exc:
                     raise
                 except:  # pragma: no cover
                     # For Python2.5 where raising strings are still allowed
@@ -191,11 +191,11 @@ def build_tracer(name, task, loader=None, hostname=None, store_errors=True,
                         loader_cleanup()
                     except (KeyboardInterrupt, SystemExit, MemoryError):
                         raise
-                    except Exception, exc:
+                    except Exception as exc:
                         logger = current_app.log.get_default_logger()
                         logger.error("Process cleanup failed: %r", exc,
                                      exc_info=sys.exc_info())
-        except Exception, exc:
+        except Exception as exc:
             if eager:
                 raise
             R = report_internal_error(task, exc)
@@ -209,7 +209,7 @@ def trace_task(task, uuid, args, kwargs, request=None, **opts):
         if task.__tracer__ is None:
             task.__tracer__ = build_tracer(task.name, task, **opts)
         return task.__tracer__(uuid, args, kwargs, request)
-    except Exception, exc:
+    except Exception as exc:
         return report_internal_error(task, exc), None
 
 

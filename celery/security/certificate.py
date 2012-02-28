@@ -19,7 +19,7 @@ class Certificate(object):
         assert crypto is not None
         try:
             self._cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
-        except crypto.Error, exc:
+        except crypto.Error as exc:
             raise SecurityError, SecurityError(
                     "Invalid certificate: %r" % (exc, )), sys.exc_info()[2]
 
@@ -44,7 +44,7 @@ class Certificate(object):
         """Verifies the signature for string containing data."""
         try:
             crypto.verify(self._cert, signature, data, digest)
-        except crypto.Error, exc:
+        except crypto.Error as exc:
             raise SecurityError, SecurityError(
                     "Bad signature: %r" % (exc, )), sys.exc_info()[2]
 

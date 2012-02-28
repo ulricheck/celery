@@ -60,7 +60,7 @@ class test_AMQPBackend(Case):
         tid3 = uuid()
         try:
             raise KeyError("foo")
-        except KeyError, exception:
+        except KeyError as exception:
             einfo = ExceptionInfo(sys.exc_info())
             tb1.mark_as_failure(tid3, exception, traceback=einfo.traceback)
             self.assertEqual(tb2.get_status(tid3), states.FAILURE)

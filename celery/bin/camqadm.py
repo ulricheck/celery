@@ -307,9 +307,9 @@ class AMQShell(cmd.Cmd):
             self.counter = self.inc_counter()
             try:
                 self.respond(self.dispatch(cmd, arg))
-            except (AttributeError, KeyError), exc:
+            except (AttributeError, KeyError) as exc:
                 self.default(line)
-            except Exception, exc:
+            except Exception as exc:
                 say(exc)
                 self.needs_reconnect = True
 

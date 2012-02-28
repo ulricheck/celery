@@ -78,7 +78,7 @@ class Mediator(bgThread):
 
         try:
             self.callback(task)
-        except Exception, exc:
+        except Exception as exc:
             self.logger.error("Mediator callback raised exception %r\n%s",
                               exc, traceback.format_exc(),
                               exc_info=sys.exc_info(),

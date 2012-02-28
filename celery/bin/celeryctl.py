@@ -66,7 +66,7 @@ class Command(object):
     def __call__(self, *args, **kwargs):
         try:
             ret = self.run(*args, **kwargs)
-        except Error, exc:
+        except Error as exc:
             self.error(self.colored.red("Error: %s" % exc))
             return exc.status
 

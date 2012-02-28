@@ -57,7 +57,7 @@ def execute_and_trace(name, uuid, args, kwargs, request=None, **opts):
             return task.__tracer__(uuid, args, kwargs, request)[0]
         finally:
             setps("celeryd", "-idle-", hostname, rate_limit=True)
-    except Exception, exc:
+    except Exception as exc:
         return report_internal_error(task, exc)
 
 

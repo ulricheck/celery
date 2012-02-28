@@ -171,7 +171,7 @@ class Scheduler(object):
             self.logger.info("Scheduler: Sending due task %s", entry.task)
             try:
                 result = self.apply_async(entry, publisher=publisher)
-            except Exception, exc:
+            except Exception as exc:
                 self.logger.error("Message Error: %s\n%s", exc,
                                   traceback.format_stack(),
                                   exc_info=sys.exc_info())
@@ -221,7 +221,7 @@ class Scheduler(object):
                 result = self.send_task(entry.task, entry.args, entry.kwargs,
                                         publisher=publisher,
                                         **entry.options)
-        except Exception, exc:
+        except Exception as exc:
             raise SchedulingError, SchedulingError(
                 "Couldn't apply scheduled task %s: %s" % (
                     entry.name, exc)), sys.exc_info()[2]
@@ -325,7 +325,7 @@ class PersistentScheduler(Scheduler):
         for suffix in "", ".db", ".dat", ".bak", ".dir":
             try:
                 os.remove(self.schedule_filename + suffix)
-            except OSError, exc:
+            except OSError as exc:
                 if exc.errno != errno.ENOENT:
                     raise
 
@@ -334,7 +334,7 @@ class PersistentScheduler(Scheduler):
             self._store = self.persistence.open(self.schedule_filename,
                                                 writeback=True)
             entries = self._store.setdefault("entries", {})
-        except Exception, exc:
+        except Exception as exc:
             self.logger.error("Removing corrupted schedule file %r: %r",
                               self.schedule_filename, exc, exc_info=True)
             self._remove_db()

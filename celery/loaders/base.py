@@ -173,7 +173,7 @@ class BaseLoader(object):
             else:
                 try:
                     value = NAMESPACES[ns][key].to_python(value)
-                except ValueError, exc:
+                except ValueError as exc:
                     # display key name in error message.
                     raise ValueError("%r: %s" % (ns_key, exc))
             return ns_key, value
@@ -193,7 +193,7 @@ class BaseLoader(object):
                                       timeout=timeout, use_ssl=use_ssl,
                                       use_tls=use_tls)
             mailer.send(message)
-        except Exception, exc:
+        except Exception as exc:
             if not fail_silently:
                 raise
             warnings.warn(self.mail.SendmailWarning(

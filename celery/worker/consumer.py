@@ -382,7 +382,7 @@ class Consumer(object):
         if task.eta:
             try:
                 eta = timer2.to_timestamp(task.eta)
-            except OverflowError, exc:
+            except OverflowError as exc:
                 self.logger.error(
                     "Couldn't convert eta %s to timestamp: %r. Task: %r",
                     task.eta, exc, task.info(safe=True),
@@ -400,9 +400,9 @@ class Consumer(object):
         """Process remote control command message."""
         try:
             self.pidbox_node.handle_message(body, message)
-        except KeyError, exc:
+        except KeyError as exc:
             self.logger.error("No such control command: %s", exc)
-        except Exception, exc:
+        except Exception as exc:
             self.logger.error(
                 "Error occurred while handling control command: %r\n%r",
                     exc, traceback.format_exc(), exc_info=sys.exc_info())
@@ -440,11 +440,11 @@ class Consumer(object):
 
         try:
             self.strategies[name](message, body, message.ack_log_error)
-        except KeyError, exc:
+        except KeyError as exc:
             self.logger.error(UNKNOWN_TASK_ERROR, exc, safe_repr(body),
                               exc_info=sys.exc_info())
             message.ack_log_error(self.logger, self.connection_errors)
-        except InvalidTaskError, exc:
+        except InvalidTaskError as exc:
             self.logger.error(INVALID_TASK_ERROR, str(exc), safe_repr(body),
                               exc_info=sys.exc_info())
             message.ack_log_error(self.logger, self.connection_errors)

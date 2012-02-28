@@ -155,7 +155,7 @@ class App(base.BaseApp):
             def refresh_feed(url):
                 try:
                     return Feed.objects.get(url=url).refresh()
-                except socket.error, exc:
+                except socket.error as exc:
                     current.retry(exc=exc)
 
         Calling the resulting task:

@@ -149,7 +149,7 @@ class Worker(configurated):
     def init_queues(self):
         try:
             self.app.select_queues(self.use_queues)
-        except KeyError, exc:
+        except KeyError as exc:
             raise ImproperlyConfigured(
                         UNKNOWN_QUEUE_ERROR % (self.use_queues, exc))
 

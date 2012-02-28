@@ -78,9 +78,9 @@ def apply_batches_task(task, args, loglevel, logfile):
     task.request.update({"loglevel": loglevel, "logfile": logfile})
     try:
         result = task(*args)
-    except Exception, exp:
+    except Exception as exc:
         result = None
-        task.logger.error("There was an Exception: %s", exp, exc_info=True)
+        task.logger.error("There was an Exception: %s", exc, exc_info=True)
     finally:
         task.request.clear()
     return result

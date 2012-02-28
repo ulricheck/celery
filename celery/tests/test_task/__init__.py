@@ -121,7 +121,7 @@ class RetryTaskCustomExc(task.Task):
         else:
             try:
                 raise MyCustomException("Elaine Marie Benes")
-            except MyCustomException, exc:
+            except MyCustomException as exc:
                 kwargs.update({"kwarg": kwarg})
                 return self.retry(kwargs=kwargs, countdown=0, exc=exc)
 

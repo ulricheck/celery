@@ -133,7 +133,7 @@ class KQueueMonitor(BaseMonitor):
         for fd in filter(None, self.filemap.values()):
             try:
                 os.close(fd)
-            except OSError, exc:
+            except OSError as exc:
                 if exc != errno.EBADF:
                     raise
             self.filemap[fd] = None
@@ -209,7 +209,7 @@ class Autoreloader(bgThread):
         self._hashes = dict([(f, file_hash(f)) for f in files])
         try:
             self._monitor.start()
-        except OSError, exc:
+        except OSError as exc:
             if exc.errno not in (errno.EINTR, errno.EAGAIN):
                 raise
 

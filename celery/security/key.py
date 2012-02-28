@@ -16,7 +16,7 @@ class PrivateKey(object):
         assert crypto is not None
         try:
             self._key = crypto.load_privatekey(crypto.FILETYPE_PEM, key)
-        except crypto.Error, exc:
+        except crypto.Error as exc:
             raise SecurityError, SecurityError(
                     "Invalid private key: %r" % (exc, )), sys.exc_info()[2]
 
@@ -24,6 +24,6 @@ class PrivateKey(object):
         """sign string containing data."""
         try:
             return crypto.sign(self._key, data, digest)
-        except crypto.Error, exc:
+        except crypto.Error as exc:
             raise SecurityError, SecurityError(
                     "Unable to sign data: %r" % (exc, )), sys.exc_info()[2]
