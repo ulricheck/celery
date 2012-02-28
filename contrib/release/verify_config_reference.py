@@ -3,7 +3,7 @@ from sys import exit, stderr
 
 from celery.app.defaults import DEFAULTS
 
-ignore = frozenset(["BROKER_INSIST", "CELERYD_POOL_PUTLOCKS",
+ignore = frozenset(["CELERYD_POOL_PUTLOCKS",
                     "CELERY_AMQP_TASK_RESULT_CONNECTION_MAX"])
 
 
