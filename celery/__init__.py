@@ -20,6 +20,10 @@ if sys.version_info < (2, 5):
     raise Exception(
         "Python 2.4 is not supported by this version. "
         "Please use Celery versions 2.1.x or earlier.")
+if sys.version_info < (2, 6):
+    raise Exception(
+        "Python 2.5 is not supported by this version. "
+        "Please use Celery versions 2.5.x or earlier.")
 
 from .local import Proxy
 

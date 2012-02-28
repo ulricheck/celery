@@ -5,8 +5,8 @@ import sys
 import codecs
 import platform
 
-if sys.version_info < (2, 5):
-    raise Exception("Celery requires Python 2.5 or higher.")
+if sys.version_info < (2, 6):
+    raise Exception("This Celery version requires Python 2.6 or higher.")
 
 try:
     from setuptools import setup, find_packages
@@ -38,7 +38,6 @@ classes = """
     Environment :: Console
     Programming Language :: Python
     Programming Language :: Python :: 2
-    Programming Language :: Python :: 2.5
     Programming Language :: Python :: 2.6
     Programming Language :: Python :: 2.7
     Programming Language :: Python :: 3
@@ -127,8 +126,6 @@ is_jython = sys.platform.startswith("java")
 is_pypy = hasattr(sys, "pypy_version_info")
 if sys.version_info < (2, 7):
     install_requires.append("ordereddict") # Replacement for the ordered dict
-if sys.version_info < (2, 6) and not (is_jython or is_pypy):
-    install_requires.append("multiprocessing")
 
 if is_jython:
     install_requires.append("threadpool")
