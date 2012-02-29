@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import errno
 import os
@@ -148,7 +148,7 @@ class PIDFile(object):
         try:
             pid = self.read_pid()
         except ValueError as exc:
-            sys.stderr.write("Broken pidfile found. Removing it.\n")
+            print("Broken pidfile found. Removing it.", file=sys.stderr)
             self.remove()
             return True
         if not pid:
@@ -159,7 +159,7 @@ class PIDFile(object):
             os.kill(pid, 0)
         except os.error as exc:
             if exc.errno == errno.ESRCH:
-                sys.stderr.write("Stale pidfile exists. Removing it.\n")
+                print("Removing stale pidfile.", file=sys.stderr)
                 self.remove()
                 return True
         return False

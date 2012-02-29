@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for more details.
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import curses
 import sys
@@ -474,11 +474,11 @@ class DisplayThread(threading.Thread):
 def capture_events(app, state, display):
 
     def on_connection_error(exc, interval):
-        sys.stderr.write("Connection Error: %r. Retry in %ss." % (
-            exc, interval))
+        print("Connection Error: {0!r}. Retry in {1}s.".format(exc, interval),
+              file=sys.stderr)
 
     while 1:
-        sys.stderr.write("-> evtop: starting capture...\n")
+        print("-> evtop: starting capture...", file=sys.stderr)
         with app.broker_connection() as conn:
             try:
                 conn.ensure_connection(on_connection_error,
@@ -489,7 +489,7 @@ def capture_events(app, state, display):
                 with recv.consumer():
                     recv.drain_events(timeout=1, ignore_timeouts=True)
             except (conn.connection_errors, conn.channel_errors) as exc:
-                sys.stderr.write("Connection lost: %r" % (exc, ))
+                print("Connection lost: {0!r}".format(exc), file=sys.stderr)
 
 
 def evtop(app=None):

@@ -10,7 +10,7 @@
     :license: BSD, see LICENSE for more details.
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import sys
 
@@ -67,7 +67,7 @@ class Dumper(object):
 
 
 def evdump(app=None):
-    sys.stderr.write("-> evdump: starting capture...\n")
+    print("-> evdump: starting capture...", file=sys.stderr)
     app = app_or_default(app)
     dumper = Dumper()
     conn = app.broker_connection()

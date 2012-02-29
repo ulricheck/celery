@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import sys
@@ -19,7 +19,7 @@ class bgThread(threading.Thread):
         raise NotImplementedError("subclass responsibility")
 
     def on_crash(self, exc_info, msg, *fmt, **kwargs):
-        sys.stderr.write((msg + "\n") % fmt)
+        print(msg % fmt, file=sys.stderr)
         traceback.print_exception(*exc_info, file=sys.stderr)
 
     def run(self):

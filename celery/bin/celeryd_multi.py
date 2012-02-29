@@ -86,7 +86,7 @@ Examples
     celeryd -n xuzzy.myhost -c 3
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 if __name__ == "__main__" and __package__ is None:
     __package__ = "celery.bin.celeryd_multi"
@@ -532,7 +532,7 @@ def abbreviations(map):
 
 
 def say(m, newline=True):
-    sys.stderr.write(newline and "%s\n" % (m, ) or m)
+    print(m, file=sys.stderr, end='\n' if newline else '')
 
 
 def findsig(args, default=signal.SIGTERM):

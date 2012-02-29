@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import sys
@@ -10,6 +10,11 @@ from optparse import OptionParser, make_option as Option
 from .. import __version__, Celery
 from ..exceptions import CDeprecationWarning, CPendingDeprecationWarning
 
+UNKNOWN_ARGS = """
+Unrecognized command line arguments: {args}
+
+Maybe you should try --help?
+"""
 
 # always enable DeprecationWarnings, so our users can see them.
 for warning in (CDeprecationWarning, CPendingDeprecationWarning):
@@ -113,10 +118,7 @@ class Command(object):
         argv = map(lambda a: isinstance(a, basestring)
                    and os.path.expanduser(a) or a, argv)
         if not self.supports_args and args:
-            sys.stderr.write(
-                "\nUnrecognized command line arguments: %s\n" % (
-                    ", ".join(args), ))
-            sys.stderr.write("\nTry --help?\n")
+            print(UNKNOWN_ARGS.format(args=", ".join(args), file=sys.stderr))
             sys.exit(1)
         return self.run(*args, **vars(options))
 

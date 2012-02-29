@@ -4,7 +4,7 @@
 .. program:: camqadm
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 if __name__ == "__main__" and __package__ is None:
     __package__ = "celery.bin.celeryctl"
@@ -14,6 +14,7 @@ import sys
 import shlex
 import pprint
 
+from functools import partial
 from itertools import count
 
 from amqplib import client_0_8 as amqp
@@ -42,9 +43,7 @@ Example:
     -> queue.delete myqueue yes no
 """
 
-
-def say(m):
-    sys.stderr.write("%s\n" % (m, ))
+say = partial(print, file=sys.stderr)
 
 
 class Spec(object):

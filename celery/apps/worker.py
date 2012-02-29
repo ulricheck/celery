@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import atexit
 import logging
@@ -113,10 +113,9 @@ class Worker(configurated):
         try:
             self.loglevel = mlevel(self.loglevel)
         except KeyError:
-            self.die("Unknown level '{0}'. Please use one of {1}.".format(
-                        self.loglevel,
-                        "|".join(l for l in LOG_LEVELS.keys()
-                                    if isinstance(l, basestring))))
+            self.die("Unknown level '{0}'. Please use one of {1}.",
+                     self.loglevel, '|'.join(l for l in LOG_LEVELS.keys()
+                                        if isinstance(l, basestring)))
 
     def run(self):
         self.init_loader()
@@ -255,9 +254,9 @@ class Worker(configurated):
                                               info=info,
                                               hostname=self.hostname)
 
-    def die(self, msg, exitcode=1):
-        sys.stderr.write("Error: {0}\n".format(msg))
-        sys.exit(exitcode)
+    def die(self, fmt, *args, **kwargs):
+        print("Error: " + fmt.format(*args, **kwargs), file=sys.stderr)
+        sys.exit(1)
 
 
 def install_worker_int_handler(worker):
