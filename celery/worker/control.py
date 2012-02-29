@@ -44,12 +44,12 @@ def revoke(panel, task_id, terminate=False, signal=None, **kwargs):
         signum = _signals.signum(signal or "TERM")
         for request in state.active_requests:
             if request.task_id == task_id:
-                action = "terminated (%s)" % (signum, )
+                action = "terminated ({0})".format(signum)
                 request.terminate(panel.consumer.pool, signal=signum)
                 break
 
     panel.logger.info("Task %s %s.", task_id, action)
-    return {"ok": "task %s %s" % (task_id, action)}
+    return {"ok": "task {0} {1}".format(task_id, action)}
 
 
 @Panel.register
@@ -95,7 +95,7 @@ def rate_limit(panel, task_name, rate_limit, **kwargs):
     try:
         timeutils.rate(rate_limit)
     except ValueError as exc:
-        return {"error": "Invalid rate limit string: %s" % exc}
+        return {"error": "Invalid rate limit string: {0}".format(exc)}
 
     try:
         panel.app.tasks[task_name].rate_limit = rate_limit
@@ -144,7 +144,7 @@ def dump_schedule(panel, safe=False, **kwargs):
         panel.logger.info("--Empty schedule--")
         return []
 
-    formatitem = lambda (i, item): "%s. %s pri%s %r" % (i,
+    formatitem = lambda (i, item): "{0}. {1} pri{2} {3!r}".format(i,
             datetime.utcfromtimestamp(item["eta"]),
             item["priority"],
             item["item"])
@@ -205,7 +205,7 @@ def dump_tasks(panel, **kwargs):
         info = map("=".join, fields.items())
         if not info:
             return task.name
-        return "%s [%s]" % (task.name, " ".join(info))
+        return "{0} [{1}]".format(task.name, " ".join(info))
 
     info = map(_extract_info, (tasks[task]
                                     for task in sorted(tasks.keys())))
@@ -249,7 +249,7 @@ def autoscale(panel, max=None, min=None):
     autoscaler = panel.consumer.controller.autoscaler
     if autoscaler:
         max_, min_ = autoscaler.update(max, min)
-        return {"ok": "autoscale now min=%r max=%r" % (max_, min_)}
+        return {"ok": "autoscale now min={0!r} max={1!r}".format(max_, min_)}
     raise ValueError("Autoscale not enabled")
 
 
@@ -272,16 +272,16 @@ def add_consumer(panel, queue=None, exchange=None, exchange_type="direct",
         cset.add_consumer_from_dict(**declaration)
         cset.consume()
         panel.logger.info("Started consuming from %r", declaration)
-        return {"ok": "started consuming from %s" % (queue, )}
+        return {"ok": "started consuming from {0}".format(queue)}
     else:
-        return {"ok": "already consuming from %s" % (queue, )}
+        return {"ok": "already consuming from {0}".format(queue)}
 
 
 @Panel.register
 def cancel_consumer(panel, queue=None, **_):
     cset = panel.consumer.task_consumer
     cset.cancel_by_queue(queue)
-    return {"ok": "no longer consuming from %s" % (queue, )}
+    return {"ok": "no longer consuming from {0}".format(queue)}
 
 
 @Panel.register

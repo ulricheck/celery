@@ -34,14 +34,14 @@ from .compat import StringIO, reload
 from .log import LOG_LEVELS  # noqa
 
 PENDING_DEPRECATION_FMT = """
-    %(description)s is scheduled for deprecation in \
-    version %(deprecation)s and removal in version v%(removal)s. \
-    %(alternative)s
+    {description} is scheduled for deprecation in \
+    version {deprecation} and removal in version v{removal}. \
+    {alternative}
 """
 
 DEPRECATION_FMT = """
-    %(description)s is deprecated and scheduled for removal in
-    version %(removal)s. %(alternative)s
+    {description} is deprecated and scheduled for removal in
+    version {removal}. {alternative}
 """
 
 
@@ -51,9 +51,9 @@ def warn_deprecated(description=None, deprecation=None, removal=None,
            "deprecation": deprecation, "removal": removal,
            "alternative": alternative}
     if deprecation is not None:
-        w = CPendingDeprecationWarning(PENDING_DEPRECATION_FMT % ctx)
+        w = CPendingDeprecationWarning(PENDING_DEPRECATION_FMT.format(**ctx))
     else:
-        w = CDeprecationWarning(DEPRECATION_FMT % ctx)
+        w = CDeprecationWarning(DEPRECATION_FMT.format(**ctx))
     warnings.warn(w)
 
 
@@ -252,8 +252,8 @@ def get_cls_by_name(name, aliases={}, imp=None, package=None,
     try:
         module = imp(module_name, package=package, **kwargs)
     except ValueError as exc:
-        raise ValueError, ValueError(
-                "Couldn't import %r: %s" % (name, exc)), sys.exc_info()[2]
+        raise ValueError, ValueError("Couldn't import {0!r}: {1!r}".format(
+                            name, exc)), sys.exc_info()[2]
     return getattr(module, cls_name)
 
 get_symbol_by_name = get_cls_by_name
@@ -386,7 +386,7 @@ def cry():  # pragma: no cover
         if not thread:
             # skip old junk (left-overs from a fork)
             continue
-        out.write("%s\n" % (thread.getName(), ))
+        out.write("{0}\n".format(thread.getName()))
         out.write(sep)
         traceback.print_stack(frame, file=out)
         out.write(sep)

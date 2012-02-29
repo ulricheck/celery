@@ -53,12 +53,12 @@ def pyimplementation():
     if hasattr(_platform, "python_implementation"):
         return _platform.python_implementation()
     elif sys.platform.startswith("java"):
-        return "Jython %s" % (sys.platform, )
+        return "Jython " + sys.platform
     elif hasattr(sys, "pypy_version_info"):
         v = ".".join(map(str, sys.pypy_version_info[:3]))
         if sys.pypy_version_info[3:]:
             v += "-" + "".join(map(str, sys.pypy_version_info[3:]))
-        return "PyPy %s" % (v, )
+        return "PyPy " + v
     else:
         return "CPython"
 
@@ -131,7 +131,7 @@ class PIDFile(object):
         try:
             return int(line)
         except ValueError:
-            raise ValueError("PID file %r contents invalid." % self.path)
+            raise ValueError("Invalid pidfile: {1!r}".format(self.path))
 
     def remove(self):
         """Removes the lock."""
@@ -173,7 +173,7 @@ class PIDFile(object):
         pidfile = os.fdopen(pidfile_fd, "w")
         try:
             pid = os.getpid()
-            pidfile.write("%d\n" % (pid, ))
+            pidfile.write("{!d}\n".format(pid))
         finally:
             pidfile.close()
 
@@ -202,10 +202,9 @@ def create_pidlock(pidfile):
 
     pidlock = PIDFile(pidfile)
     if pidlock.is_locked() and not pidlock.remove_if_stale():
-        raise SystemExit(
-                "ERROR: Pidfile (%s) already exists.\n"
-                "Seems we're already running? (PID: %s)" % (
-                    pidfile, pidlock.read_pid()))
+        raise SystemExit("ERROR: Pidfile {file!r} already exists.\n"
+                         "Seems we're already running? (pid: {pid})".format(
+                            file=pidfile, pid=pidlock.read_pid()))
     return pidlock
 
 
@@ -324,7 +323,7 @@ def parse_uid(uid):
             try:
                 return pwd.getpwnam(uid).pw_uid
             except KeyError:
-                raise KeyError("User does not exist: %r" % (uid, ))
+                raise KeyError("User does not exist: {uid!r}".format(uid=uid))
         raise
 
 
@@ -342,7 +341,7 @@ def parse_gid(gid):
             try:
                 return grp.getgrnam(gid).gr_gid
             except KeyError:
-                raise KeyError("Group does not exist: %r" % (gid, ))
+                raise KeyError("Group does not exist: {gid!r}".format(gid))
         raise
 
 

@@ -58,9 +58,8 @@ class EvCommand(Command):
         from ..events.snapshot import evcam
         workdir = working_directory
         self.set_process_status("cam")
-        kwargs["app"] = self.app
         cam = partial(evcam, camera,
-                      logfile=logfile, pidfile=pidfile, **kwargs)
+                      logfile=logfile, pidfile=pidfile, app=self.app, **kwargs)
 
         if detach:
             with detached(logfile, pidfile, uid, gid, umask, workdir):

@@ -129,7 +129,7 @@ class Queues(abstract.Component):
                 # just send task directly to pool, skip the mediator.
                 w.ready_queue.put = w.process_task
         else:
-            w.ready_queue = TaskBucket(task_registry=self.app.tasks)
+            w.ready_queue = TaskBucket(task_registry=w.app.tasks)
 
 
 class Timers(abstract.Component):
@@ -226,7 +226,7 @@ class WorkController(configurated):
         except SystemTerminate:
             self.terminate()
         except Exception as exc:
-            self.logger.error("Unrecoverable error: %r" % (exc, ),
+            self.logger.error("Unrecoverable error: %r", exc,
                               exc_info=sys.exc_info())
             self.stop()
         except (KeyboardInterrupt, SystemExit):
@@ -295,10 +295,10 @@ class WorkController(configurated):
 
         for module in set(modules or ()):
             if module not in sys.modules:
-                self.logger.debug("importing module %s" % (module, ))
+                self.logger.debug("importing module %s", module)
                 imp(module)
             elif reload:
-                self.logger.debug("reloading module %s" % (module, ))
+                self.logger.debug("reloading module %s", module)
                 reload_from_cwd(sys.modules[module], reloader)
         self.pool.restart()
 

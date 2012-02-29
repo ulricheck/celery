@@ -175,7 +175,7 @@ class BaseLoader(object):
                     value = NAMESPACES[ns][key].to_python(value)
                 except ValueError as exc:
                     # display key name in error message.
-                    raise ValueError("%r: %s" % (ns_key, exc))
+                    raise ValueError("{0!r}: {1}".format(ns_key, exc))
             return ns_key, value
 
         return dict(map(getarg, args))
@@ -197,9 +197,9 @@ class BaseLoader(object):
             if not fail_silently:
                 raise
             warnings.warn(self.mail.SendmailWarning(
-                "Mail could not be sent: %r %r\n%r" % (
-                    exc, {"To": to, "Subject": subject},
-                    traceback.format_stack())))
+                "Mail could not be sent: {0!r} {1!r}\n{2!r}".format(
+                        exc, {"To": to, "Subject": subject},
+                        traceback.format_stack())))
 
     @property
     def conf(self):

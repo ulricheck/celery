@@ -84,7 +84,7 @@ if os.environ.get("CELERY_BENCH"):  # pragma: no cover
         all_count += 1
         if not all_count % bench_every:
             print("* Time spent processing %s tasks (since first "
-                    "task received): ~%.4fs\n" % (
+                    "task received): ~{0:.4f}s\n".format(
                 bench_every, time() - bench_start))
             bench_start = None
 

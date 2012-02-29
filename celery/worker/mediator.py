@@ -72,9 +72,8 @@ class Mediator(bgThread):
             return
 
         if self._does_debug:
-            self.logger.debug(
-                "Mediator: Running callback for task: %s[%s]" % (
-                    task.task_name, task.task_id))
+            self.logger.debug("Mediator: Running callback for task: %s[%s]",
+                              task.task_name, task.task_id)
 
         try:
             self.callback(task)

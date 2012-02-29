@@ -20,17 +20,16 @@ try:
 except ImportError:  # py3k
     import builtins  # noqa
 
-from functools import wraps
 from contextlib import contextmanager
+from functools import wraps
+from logging import LoggerAdapter
 
 import mock
 from nose import SkipTest
 
 from ..app import app_or_default
 from ..utils import noop
-from ..utils.compat import WhateverIO, LoggerAdapter
-
-from .compat import catch_warnings
+from ..utils.compat import WhateverIO
 
 
 class Mock(mock.Mock):
@@ -83,7 +82,7 @@ class _AssertWarnsContext(_AssertRaisesBaseContext):
         for v in sys.modules.values():
             if getattr(v, '__warningregistry__', None):
                 v.__warningregistry__ = {}
-        self.warnings_manager = catch_warnings(record=True)
+        self.warnings_manager = warnings.catch_warnings(record=True)
         self.warnings = self.warnings_manager.__enter__()
         warnings.simplefilter("always", self.expected)
         return self

@@ -109,16 +109,14 @@ class MutableURL(object):
     def __str__(self):
         scheme, netloc, path, params, query, fragment = self.parts
         query = urlencode(utf8dict(self.query.items()))
-        components = ["%s://" % scheme,
-                      "%s" % netloc,
-                      path and "%s" % path or "/",
-                      params and ";%s" % params or None,
-                      query and "?%s" % query or None,
-                      fragment and "#%s" % fragment or None]
+        components = [scheme + "://", netloc, path or "/",
+                      ";{0}".format(params) if params else None,
+                      "?{0}".format(query)  if query else None,
+                      "#{0}".format(fragment) if fragment else None]
         return "".join(filter(None, components))
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, str(self))
+        return "<{0}: {1}>".format(self.__class__.__name__, str(self))
 
 
 class HttpDispatch(object):
@@ -131,7 +129,7 @@ class HttpDispatch(object):
     :param logger: Logger used for user/system feedback.
 
     """
-    user_agent = "celery/%s" % celery_version
+    user_agent = "celery/{version}".format(version=celery_version)
     timeout = 5
 
     def __init__(self, url, method, task_kwargs, logger):

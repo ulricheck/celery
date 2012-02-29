@@ -102,9 +102,8 @@ def evcam(camera, freq=1.0, maxrate=None, loglevel=0,
                                   logfile=logfile,
                                   name="celery.evcam")
 
-    logger.info(
-        "-> evcam: Taking snapshots with %s (every %s secs.)\n" % (
-            camera, freq))
+    logger.info("-> evcam: Taking snapshots with %s (every %s secs.)",
+                camera, freq)
     state = app.events.State()
     cam = instantiate(camera, state, app=app,
                       freq=freq, maxrate=maxrate, logger=logger,

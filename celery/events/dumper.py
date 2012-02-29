@@ -43,26 +43,27 @@ class Dumper(object):
         if type.startswith("task-"):
             uuid = event.pop("uuid")
             if type in ("task-received", "task-sent"):
-                task = TASK_NAMES[uuid] = "%s(%s) args=%s kwargs=%s" % (
-                        event.pop("name"), uuid,
-                        event.pop("args"),
-                        event.pop("kwargs"))
+                task = TASK_NAMES[uuid] = "{0}({1}) args={2} kwargs={3}" \
+                            .format(event.pop("name"), uuid,
+                                    event.pop("args"),
+                                    event.pop("kwargs"))
             else:
                 task = TASK_NAMES.get(uuid, "")
             return self.format_task_event(hostname, timestamp,
                                           type, task, event)
-        fields = ", ".join("%s=%s" % (key, event[key])
+        fields = ", ".join("{0}={1}".format(key, event[key])
                         for key in sorted(event.keys()))
         sep = fields and ":" or ""
-        print("%s [%s] %s%s %s" % (hostname, timestamp,
-                                    humanize_type(type), sep, fields))
+        print("{0} [{1}] {2}{3} {4}".format(hostname, timestamp,
+                                            humanize_type(type), sep, fields))
 
     def format_task_event(self, hostname, timestamp, type, task, event):
-        fields = ", ".join("%s=%s" % (key, event[key])
+        fields = ", ".join("{0}={1}".format(key, event[key])
                         for key in sorted(event.keys()))
         sep = fields and ":" or ""
-        print("%s [%s] %s%s %s %s" % (hostname, timestamp,
-                                    humanize_type(type), sep, task, fields))
+        print("{0} [{1}] {2}{3} {4} {5}".format(hostname, timestamp,
+                                                humanize_type(type), sep,
+                                                task, fields))
 
 
 def evdump(app=None):

@@ -33,10 +33,10 @@ RATE_MODIFIER_MAP = {"s": lambda n: n,
 
 HAVE_TIMEDELTA_TOTAL_SECONDS = hasattr(timedelta, "total_seconds")
 
-TIME_UNITS = (("day", 60 * 60 * 24.0, lambda n: "%.2f" % n),
-              ("hour", 60 * 60.0, lambda n: "%.2f" % n),
-              ("minute", 60.0, lambda n: "%.2f" % n),
-              ("second", 1.0, lambda n: "%.2f" % n))
+TIME_UNITS = (("day", 60 * 60 * 24.0, lambda n: format(n, "%.2f")),
+              ("hour", 60 * 60.0, lambda n: format(n, "%.2f")),
+              ("minute", 60.0, lambda n: format(n, "%.2f")),
+              ("second", 1.0, lambda n: format(n, "%.2f")))
 
 
 class UnknownTimezone(Exception):
@@ -190,7 +190,7 @@ def humanize_seconds(secs, prefix=""):
         if secs >= divider:
             w = secs / divider
             punit = w > 1 and (unit + "s") or unit
-            return "%s%s %s" % (prefix, formatter(w), punit)
+            return "{0}{1} {2}".format(prefix, formatter(w), punit)
     return "now"
 
 

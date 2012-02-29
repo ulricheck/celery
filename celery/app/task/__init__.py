@@ -61,7 +61,7 @@ class Context(threading.local):
             return default
 
     def __repr__(self):
-        return "<Context: %r>" % (vars(self, ))
+        return "<Context: {0!r}>".format(vars(self))
 
 
 class TaskType(type):
@@ -134,7 +134,7 @@ class TaskType(type):
         return task
 
     def __repr__(cls):
-        return "<class Task of %s>" % (cls.app, )
+        return "<class Task of {0.app}>".format(cls)
 
 
 class BaseTask(object):
@@ -548,7 +548,7 @@ class BaseTask(object):
             if exc:
                 maybe_reraise()
             raise self.MaxRetriesExceededError(
-                    "Can't retry %s[%s] args:%s kwargs:%s" % (
+                    "Can't retry {0}[{1}] args:{2} kwargs:{3}".format(
                         self.name, options["task_id"], args, kwargs))
 
         # If task was executed eagerly using apply(),
@@ -559,8 +559,8 @@ class BaseTask(object):
         self.apply_async(args=args, kwargs=kwargs, **options)
         if throw:
             raise RetryTaskError(
-                eta and "Retry at %s" % (eta, )
-                     or "Retry in %s secs." % (countdown, ), exc)
+                eta and "Retry at {0}".format(eta)
+                     or "Retry in {0} secs.".format(countdown), exc)
 
     @classmethod
     def apply(self, args=None, kwargs=None, **options):
@@ -711,8 +711,7 @@ class BaseTask(object):
         request.execute_using_pool(pool, loglevel, logfile)
 
     def __repr__(self):
-        """`repr(task)`"""
-        return "<@task: %s>" % (self.name, )
+        return "<@task: {0.name}>".format(self)
 
     @classmethod
     def subtask(cls, *args, **kwargs):

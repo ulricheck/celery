@@ -386,16 +386,16 @@ class Request(object):
                 "worker_pid": self.worker_pid}
 
     def shortinfo(self):
-        return "%s[%s]%s%s" % (
-                    self.name, self.id,
-                    " eta:[%s]" % (self.eta, ) if self.eta else "",
-                    " expires:[%s]" % (self.expires, ) if self.expires else "")
+        return "{0}[{1}]{2}{3}".format(
+                self.name, self.id,
+                " eta:[{0}]".format(self.eta) if self.eta else "",
+                " expires:[{0}]".format(self.expires) if self.expires else "")
     __str__ = shortinfo
 
     def __repr__(self):
-        return '<%s: {name:"%s", id:"%s", args:"%s", kwargs:"%s"}>' % (
-                self.__class__.__name__,
-                self.name, self.id, self.args, self.kwargs)
+        return '<{0}: {name:"{1}", id:"{2}", args:"{3}", kwargs:"{4}"}>' \
+                    .format(self.__class__.__name__, self.name, self.id,
+                            self.args, self.kwargs)
 
     @property
     def tzlocal(self):
@@ -408,20 +408,21 @@ class Request(object):
         return (not self.task.ignore_result
                 or self.task.store_errors_even_if_ignored)
 
-    def _compat_get_task_id(self):
+    @property
+    def task_id(self):
         return self.id
 
-    def _compat_set_task_id(self, value):
+    @task_id.setter  # noqa
+    def task_id(self, value):
         self.id = value
 
-    def _compat_get_task_name(self):
+    @property
+    def task_name(self):
         return self.name
 
-    def _compat_set_task_name(self, value):
+    @task_name.setter  # noqa
+    def task_name(self, value):
         self.name = value
-
-    task_id = property(_compat_get_task_id, _compat_set_task_id)
-    task_name = property(_compat_get_task_name, _compat_set_task_name)
 
 
 class TaskRequest(Request):

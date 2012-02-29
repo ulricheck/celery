@@ -6,7 +6,6 @@ import sys
 
 from .. import signals
 from ..utils import isatty
-from ..utils.compat import LoggerAdapter, WatchedFileHandler
 from ..utils.log import (ColorFormatter, ensure_process_aware_logger,
                          LoggingProxy, get_multiprocessing_logger,
                          reset_multiprocessing_logger, mlevel)
@@ -104,7 +103,7 @@ class Logging(object):
         logfile = sys.__stderr__ if logfile is None else logfile
         if hasattr(logfile, "write"):
             return logging.StreamHandler(logfile)
-        return WatchedFileHandler(logfile)
+        return logging.WatchedFileHandler(logfile)
 
     def get_default_logger(self, loglevel=None, name="celery"):
         """Get default logger instance.
@@ -161,8 +160,8 @@ class Logging(object):
         signals.after_setup_task_logger.send(sender=None, logger=logger,
                                      loglevel=loglevel, logfile=logfile,
                                      format=format, colorize=colorize)
-        return LoggerAdapter(logger, {"task_id": task_id,
-                                      "task_name": task_name})
+        return logging.LoggerAdapter(logger, {"task_id": task_id,
+                                              "task_name": task_name})
 
     def _is_configured(self, logger):
         return logger.handlers and not getattr(

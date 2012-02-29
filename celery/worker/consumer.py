@@ -125,7 +125,8 @@ The full contents of the message body was:
 """
 
 MESSAGE_REPORT_FMT = """\
-body: %s {content_type:%s content_encoding:%s delivery_info:%s}\
+body: {body} {content_type:{type} content_encoding:{encoding} \
+delivery_info:{info}}\
 """
 
 
@@ -416,10 +417,12 @@ class Consumer(object):
         self.qos.decrement_eventually()
 
     def _message_report(self, body, message):
-        return MESSAGE_REPORT_FMT % (safe_repr(body),
-                                     safe_repr(message.content_type),
-                                     safe_repr(message.content_encoding),
-                                     safe_repr(message.delivery_info))
+        return MESSAGE_REPORT_FMT.format(
+                    body=safe_repr(body),
+                    type=safe_repr(message.content_type),
+                    encoding=safe_repr(message.content_encoding),
+                    info=safe_repr(message.delivery_info),
+        )
 
     def receive_message(self, body, message):
         """Handles incoming messages.
@@ -433,8 +436,8 @@ class Consumer(object):
         except (KeyError, TypeError):
             warnings.warn(RuntimeWarning(
                 "Received and deleted unknown message. Wrong destination?!? \
-                the full contents of the message body was: %s" % (
-                 self._message_report(body, message), )))
+                the full contents of the message body was: {}".format(
+                 self._message_report(body, message))))
             message.ack_log_error(self.logger, self.connection_errors)
             return
 

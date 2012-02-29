@@ -10,7 +10,6 @@ from celery.log import (setup_logger, setup_task_logger,
                         redirect_stdouts_to_logger, setup_logging_subsystem)
 from celery.utils.log import LoggingProxy
 from celery.utils import uuid
-from celery.utils.compat import _CompatLoggerAdapter
 from celery.tests.utils import (Case, override_stdouts, wrap_logger,
                                 get_handlers, set_handlers)
 
@@ -140,48 +139,3 @@ class MockLogger(logging.Logger):
 
     def isEnabledFor(self, level):
         return True
-
-
-class test_CompatLoggerAdapter(Case):
-    levels = ("debug",
-              "info",
-              "warn", "warning",
-              "error",
-              "fatal", "critical")
-
-    def setUp(self):
-        self.logger, self.adapter = self.createAdapter()
-
-    def createAdapter(self, name=None, extra={"foo": "bar"}):
-        logger = MockLogger(name=name or uuid())
-        return logger, _CompatLoggerAdapter(logger, extra)
-
-    def test_levels(self):
-        for level in self.levels:
-            msg = "foo bar %s" % (level, )
-            logger, adapter = self.createAdapter()
-            getattr(adapter, level)(msg)
-            self.assertEqual(logger._records[0].msg, msg)
-
-    def test_exception(self):
-        try:
-            raise KeyError("foo")
-        except KeyError:
-            self.adapter.exception("foo bar exception")
-        self.assertEqual(self.logger._records[0].msg, "foo bar exception")
-
-    def test_setLevel(self):
-        self.adapter.setLevel(logging.INFO)
-        self.assertEqual(self.logger.level, logging.INFO)
-
-    def test_process(self):
-        msg, kwargs = self.adapter.process("foo bar baz", {"exc_info": 1})
-        self.assertDictEqual(kwargs, {"exc_info": 1,
-                                      "extra": {"foo": "bar"}})
-
-    def test_add_remove_handlers(self):
-        handler = logging.StreamHandler()
-        self.adapter.addHandler(handler)
-        self.assertIs(self.logger.handlers[0], handler)
-        self.adapter.removeHandler(handler)
-        self.assertListEqual(self.logger.handlers, [])

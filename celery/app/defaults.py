@@ -44,7 +44,7 @@ def str_to_bool(term, table={"false": False, "no": False, "0": False,
     try:
         return table[term.lower()]
     except KeyError:
-        raise TypeError("%r can not be converted to type bool" % (term, ))
+        raise TypeError("Can't coerce {!r} to type bool".format(term))
 
 
 class Option(object):
@@ -216,7 +216,7 @@ def find_deprecated_settings(source):
     from celery.utils import warn_deprecated
     for name, opt in flatten(NAMESPACES):
         if (opt.deprecate_by or opt.remove_by) and getattr(source, name, None):
-            warn_deprecated(description="The %r setting" % (name, ),
+            warn_deprecated(description="The '{0}' setting".format(name),
                             deprecation=opt.deprecate_by,
                             removal=opt.remove_by,
                             alternative=opt.alt)

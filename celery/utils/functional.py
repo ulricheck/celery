@@ -11,14 +11,9 @@
 """
 from __future__ import absolute_import
 
+from collections import Sequence
 from functools import wraps
 from threading import Lock
-
-try:
-    from collections import Sequence
-except ImportError:
-    # <= Py2.5
-    Sequence = (list, tuple)  # noqa
 
 from celery.datastructures import LRUCache
 

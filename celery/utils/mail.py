@@ -11,15 +11,9 @@
 """
 from __future__ import absolute_import
 
-import sys
 import smtplib
 
-try:
-    from email.mime.text import MIMEText
-except ImportError:
-    from email.MIMEText import MIMEText  # noqa
-
-supports_timeout = sys.version_info >= (2, 6)
+from email.mime.text import MIMEText
 
 
 class SendmailWarning(UserWarning):
@@ -40,7 +34,7 @@ class Message(object):
             self.to = [self.to]
 
     def __repr__(self):
-        return "<Email: To:%r Subject:%r>" % (self.to, self.subject)
+        return "<Email: To:{0!r} Subject:{1!r}>".format(self.to, self.subject)
 
     def __str__(self):
         msg = MIMEText(self.body, "plain", self.charset)
@@ -62,23 +56,9 @@ class Mailer(object):
         self.use_ssl = use_ssl
         self.use_tls = use_tls
 
-    def send(self, message):
-        if supports_timeout:
-            self._send(message, timeout=self.timeout)
-        else:
-            import socket
-            old_timeout = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(self.timeout)
-            try:
-                self._send(message)
-            finally:
-                socket.setdefaulttimeout(old_timeout)
-
-    def _send(self, message, **kwargs):
-        if (self.use_ssl):
-            client = smtplib.SMTP_SSL(self.host, self.port, **kwargs)
-        else:
-            client = smtplib.SMTP(self.host, self.port, **kwargs)
+    def send(self, message, **kwargs):
+        Client = smtplib.SMTP_SSL if self.use_ssl else smtplib.SMTP
+        client = Client(self.host, self.port, timeout=self.timeout, **kwargs)
 
         if self.use_tls:
             client.ehlo()
@@ -136,23 +116,23 @@ class ErrorMail(object):
 
     #: Format string used to generate error email subjects.
     subject = """\
-        [celery@%(hostname)s] Error: Task %(name)s (%(id)s): %(exc)s
+        [celery@{hostname}] Error: Task {name} ({id}): {exc!r}
     """
 
     #: Format string used to generate error email content.
     body = """
-Task %%(name)s with id %%(id)s raised exception:\n%%(exc)r
+Task {name} with id {id} raised exception:\n{exc!r}
 
 
-Task was called with args: %%(args)s kwargs: %%(kwargs)s.
+Task was called with args: {args} kwargs: {kwargs}.
 
 The contents of the full traceback was:
 
-%%(traceback)s
+{traceback}
 
 %(EMAIL_SIGNATURE_SEP)s
 Just to let you know,
-celeryd at %%(hostname)s.
+celeryd at {hostname}.
 """ % {"EMAIL_SIGNATURE_SEP": EMAIL_SIGNATURE_SEP}
 
     def __init__(self, task, **kwargs):
@@ -166,10 +146,10 @@ celeryd at %%(hostname)s.
         return True
 
     def format_subject(self, context):
-        return self.subject.strip() % context
+        return self.subject.strip().format(**context)
 
     def format_body(self, context):
-        return self.body.strip() % context
+        return self.body.strip().format(**context)
 
     def send(self, context, exc, fail_silently=True):
         if self.should_send(context, exc):

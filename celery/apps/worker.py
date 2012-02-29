@@ -28,27 +28,27 @@ except ImportError:
 
 
 BANNER = """
- -------------- celery@%(hostname)s v%(version)s
+ -------------- celery@{hostname} v{version}
 ---- **** -----
 --- * ***  * -- [Configuration]
--- * - **** ---   . broker:      %(conninfo)s
-- ** ----------   . loader:      %(loader)s
-- ** ----------   . logfile:     %(logfile)s@%(loglevel)s
-- ** ----------   . concurrency: %(concurrency)s
-- ** ----------   . events:      %(events)s
-- *** --- * ---   . beat:        %(celerybeat)s
+-- * - **** ---   . broker:      {conninfo}
+- ** ----------   . loader:      {loader}
+- ** ----------   . logfile:     {logfile}@{loglevel}
+- ** ----------   . concurrency: {concurrency}
+- ** ----------   . events:      {events}
+- *** --- * ---   . beat:        {celerybeat}
 -- ******* ----
 --- ***** ----- [Queues]
- --------------   %(queues)s
+ --------------   {queues}
 """
 
 EXTRA_INFO_FMT = """
 [Tasks]
-%(tasks)s
+{tasks}
 """
 
 UNKNOWN_QUEUE_ERROR = """\
-Trying to select queue subset of %r, but queue %s is not
+Trying to select queue subset of {0!r}, but queue {1} is not
 defined in the CELERY_QUEUES setting.
 
 If you want to automatically declare unknown queues you can
@@ -113,7 +113,7 @@ class Worker(configurated):
         try:
             self.loglevel = mlevel(self.loglevel)
         except KeyError:
-            self.die("Unknown level %r. Please use one of %s." % (
+            self.die("Unknown level '{0}'. Please use one of {1}.".format(
                         self.loglevel,
                         "|".join(l for l in LOG_LEVELS.keys()
                                     if isinstance(l, basestring))))
@@ -144,14 +144,14 @@ class Worker(configurated):
 
     def on_consumer_ready(self, consumer):
         signals.worker_ready.send(sender=consumer)
-        print("celery@%s has started." % self.hostname)
+        print("celery@{0.hostname} has started.".format(self))
 
     def init_queues(self):
         try:
             self.app.select_queues(self.use_queues)
         except KeyError as exc:
             raise ImproperlyConfigured(
-                        UNKNOWN_QUEUE_ERROR % (self.use_queues, exc))
+                        UNKNOWN_QUEUE_ERROR.format(self.use_queues, exc))
 
     def init_loader(self):
         self.loader = self.app.loader
@@ -167,7 +167,7 @@ class Worker(configurated):
     def purge_messages(self):
         count = self.app.control.discard_all()
         what = (not count or count > 1) and "messages" or "message"
-        print("discard: Erased %d %s from the queue.\n" % (count, what))
+        print("discard: Erased {0} {1} from the queue.\n".format(count, what))
 
     def worker_init(self):
         # Run the worker init handler.
@@ -179,13 +179,13 @@ class Worker(configurated):
         if not include_builtins:
             tasklist = filter(lambda s: not s.startswith("celery."),
                               tasklist)
-        return "\n".join("  . %s" % task for task in sorted(tasklist))
+        return "\n".join("  . {0}".format(task) for task in sorted(tasklist))
 
     def extra_info(self):
         if self.loglevel <= logging.INFO:
             include_builtins = self.loglevel <= logging.DEBUG
             tasklist = self.tasklist(include_builtins=include_builtins)
-            return EXTRA_INFO_FMT % {"tasks": tasklist}
+            return EXTRA_INFO_FMT.format(tasks=tasklist)
         return ""
 
     def startup_info(self):
@@ -193,19 +193,18 @@ class Worker(configurated):
         concurrency = self.concurrency
         if self.autoscale:
             cmax, cmin = self.autoscale
-            concurrency = "{min=%s, max=%s}" % (cmin, cmax)
-        return BANNER % {
-            "hostname": self.hostname,
-            "version": __version__,
-            "conninfo": self.app.broker_connection().as_uri(),
-            "concurrency": concurrency,
-            "loglevel": LOG_LEVELS[self.loglevel],
-            "logfile": self.logfile or "[stderr]",
-            "celerybeat": "ON" if self.embed_clockservice else "OFF",
-            "events": "ON" if self.send_events else "OFF",
-            "loader": qualname(self.loader),
-            "queues": app.amqp.queues.format(indent=18, indent_first=False),
-        }
+            concurrency = "{min={0}, max={1}}".format(cmin, cmax)
+        return BANNER.format(
+            hostname=self.hostname,
+            version=__version__,
+            conninfo=self.app.broker_connection().as_uri(),
+            concurrency=concurrency,
+            loglevel=LOG_LEVELS[self.loglevel],
+            logfile=self.logfile or "[stderr]",
+            celerybeat="ON" if self.embed_clockservice else "OFF",
+            events="ON" if self.send_events else "OFF",
+            loader=qualname(self.loader),
+            queues=app.amqp.queues.format(indent=18, indent_first=False))
 
     def run_worker(self):
         if self.pidfile:
@@ -251,13 +250,13 @@ class Worker(configurated):
         os.environ.setdefault("celery_dummy_proxy", "set_by_celeryd")
 
     def set_process_status(self, info):
-        info = "%s (%s)" % (info, platforms.strargv(sys.argv))
+        info = "{0} ({1})".format(info, platforms.strargv(sys.argv))
         return platforms.set_mp_process_title("celeryd",
                                               info=info,
                                               hostname=self.hostname)
 
     def die(self, msg, exitcode=1):
-        sys.stderr.write("Error: %s\n" % (msg, ))
+        sys.stderr.write("Error: {0}\n".format(msg))
         sys.exit(exitcode)
 
 
@@ -269,7 +268,7 @@ def install_worker_int_handler(worker):
             print("celeryd: Hitting Ctrl+C again will terminate "
                   "all running tasks!")
             install_worker_int_again_handler(worker)
-            print("celeryd: Warm shutdown (%s)" % (process_name, ))
+            print("celeryd: Warm shutdown ({0})".format(process_name))
             worker.stop(in_sighandler=True)
         raise SystemExit()
 
@@ -281,7 +280,7 @@ def install_worker_int_again_handler(worker):
     def _stop(signum, frame):
         process_name = get_process_name()
         if not process_name or process_name == "MainProcess":
-            print("celeryd: Cold shutdown (%s)" % (process_name, ))
+            print("celeryd: Cold shutdown ({0})".format(process_name))
             worker.terminate(in_sighandler=True)
         raise SystemTerminate()
 
@@ -293,7 +292,7 @@ def install_worker_term_handler(worker):
     def _stop(signum, frame):
         process_name = get_process_name()
         if not process_name or process_name == "MainProcess":
-            print("celeryd: Warm shutdown (%s)" % (process_name, ))
+            print("celeryd: Warm shutdown ({0})".format(process_name))
             worker.stop(in_sighandler=True)
         raise SystemExit()
 
@@ -305,7 +304,7 @@ def install_worker_term_hard_handler(worker):
     def _stop(signum, frame):
         process_name = get_process_name()
         if not process_name or process_name == "MainProcess":
-            print("celeryd: Cold shutdown (%s)" % (process_name, ))
+            print("celeryd: Cold shutdown ({0})".format(process_name))
             worker.terminate(in_sighandler=True)
         raise SystemTerminate()
 
@@ -316,7 +315,7 @@ def install_worker_restart_handler(worker):
 
     def restart_worker_sig_handler(signum, frame):
         """Signal handler restarting the current python program."""
-        print("Restarting celeryd (%s)" % (" ".join(sys.argv), ))
+        print("Restarting celeryd ({0})".format(" ".join(sys.argv)))
         worker.stop(in_sighandler=True)
         os.execv(sys.executable, [sys.executable] + sys.argv)
 

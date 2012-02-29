@@ -973,7 +973,7 @@ class ApplyResult(object):
             timeout=None, lost_worker_timeout=10.0):
         self._mutex = threading.Lock()
         self._cond = threading.Condition(threading.Lock())
-        self._job = job_counter.next()
+        self._job = next(job_counter)
         self._cache = cache
         self._ready = False
         self._callback = callback
@@ -1133,7 +1133,7 @@ class IMapIterator(object):
 
     def __init__(self, cache, lost_worker_timeout=10.0):
         self._cond = threading.Condition(threading.Lock())
-        self._job = job_counter.next()
+        self._job = next(job_counter)
         self._cache = cache
         self._items = collections.deque()
         self._index = 0

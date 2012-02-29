@@ -77,7 +77,7 @@ class TraceInfo(object):
         message, orig_exc = self.retval.args
         if store_errors:
             task.backend.mark_as_retry(req.id, orig_exc, self.strtb)
-        expanded_msg = "%s: %s" % (message, str(orig_exc))
+        expanded_msg = "{0}: {1}".format(message, orig_exc)
         einfo = ExceptionInfo((type_, type_(expanded_msg, None), tb))
         task.on_retry(exc, req.id, req.args, req.kwargs, einfo)
         return einfo
@@ -163,14 +163,6 @@ def build_tracer(name, task, loader=None, hostname=None, store_errors=True,
                     R = I.handle_error_state(task, eager=eager)
                 except BaseException as exc:
                     raise
-                except:  # pragma: no cover
-                    # For Python2.5 where raising strings are still allowed
-                    # (but deprecated)
-                    if propagate:
-                        raise
-                    I = Info(FAILURE, None, sys.exc_info())
-                    state, retval, einfo = I.state, I.retval, I.exc_info
-                    R = I.handle_error_state(task, eager=eager)
                 else:
                     task_on_success(retval, uuid, args, kwargs)
                     if publish_result:
@@ -225,8 +217,8 @@ def report_internal_error(task, exc):
         _value = task.backend.prepare_exception(exc)
         exc_info = ExceptionInfo((_type, _value, _tb), internal=True)
         warn(RuntimeWarning(
-            "Exception raised outside body: %r:\n%s" % (
-                exc, exc_info.traceback)))
+            "Exception raised outside body: {e.exception!r}:\n{e.traceback}" \
+                    .format(e=exc_info)))
         return exc_info
     finally:
         del(_tb)

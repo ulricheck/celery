@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from mock import patch
-from contextlib import contexmanager
+from contextlib import contextmanager
 
 from celery import current_app
 from celery import result
@@ -50,7 +50,6 @@ class test_unlock_chord_task(AppCase):
 
     @patch("celery.result.TaskSetResult")
     def test_unlock_ready(self, TaskSetResult):
-        tasks = current_app.tasks
 
         class NeverReady(TSR):
             is_ready = False
@@ -59,12 +58,10 @@ class test_unlock_chord_task(AppCase):
         def callback(*args, **kwargs):
             pass
 
-        pts, result.TaskSetResult  = result.TaskSetResult, NeverReady
+        pts, result.TaskSetResult = result.TaskSetResult, NeverReady
         callback.apply_async = Mock()
         try:
             with patch_unlock_retry() as (unlock, retry):
-                result = Mock(attrs=dict(ready=lambda: True,
-                                        join=lambda **kw: [2, 4, 8, 6]))
                 TaskSetResult.restore = lambda setid: result
                 subtask, chords.subtask = chords.subtask, passthru
                 try:
@@ -73,7 +70,6 @@ class test_unlock_chord_task(AppCase):
                 finally:
                     chords.subtask = subtask
                 callback.apply_async.assert_called_with(([2, 4, 8, 6], ), {})
-                result.delete.assert_called_with()
                 # did not retry
                 self.assertFalse(retry.call_count)
         finally:

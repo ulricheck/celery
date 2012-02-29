@@ -22,6 +22,16 @@ from .utils import is_iterable
 from .utils.timeutils import (timedelta_seconds, weekday, maybe_timedelta,
                               remaining, humanize_seconds)
 
+CRON_PATTERN_INVALID = """\
+Invalid crontab pattern. Valid range is 0-{range}. \
+'{value}' was found.\
+"""
+
+CRON_INVALID_TYPE = """\
+Argument cronspec needs to be of any of the following types: \
+int, basestring, or an iterable type. {type!r} was given.\
+"""
+
 
 class ParseException(Exception):
     """Raised by crontab_parser when the input can't be parsed."""
@@ -72,7 +82,7 @@ class schedule(object):
         return False, rem
 
     def __repr__(self):
-        return "<freq: %s>" % self.human_seconds
+        return "<freq: {0.human_seconds}>".format(self)
 
     def __eq__(self, other):
         if isinstance(other, schedule):
@@ -172,7 +182,7 @@ class crontab_parser(object):
             try:
                 i = weekday(s)
             except KeyError:
-                raise ValueError("Invalid weekday literal '%s'." % s)
+                raise ValueError("Invalid weekday literal {0!r}.".format(s))
         return i
 
 
@@ -246,17 +256,13 @@ class crontab(schedule):
         elif is_iterable(cronspec):
             result = set(cronspec)
         else:
-            raise TypeError(
-                    "Argument cronspec needs to be of any of the "
-                    "following types: int, basestring, or an iterable type. "
-                    "'%s' was given." % type(cronspec))
+            raise TypeError(CRON_INVALID_TYPE.format(type=type(cronspec)))
 
         # assure the result does not exceed the max
         for number in result:
             if number >= max_:
-                raise ValueError(
-                        "Invalid crontab pattern. Valid "
-                        "range is 0-%d. '%d' was found." % (max_ - 1, number))
+                raise ValueError(CRON_PATTERN_INVALID.format(range=max_ - 1,
+                                                             value=number))
 
         return result
 
@@ -270,9 +276,9 @@ class crontab(schedule):
         self.nowfun = nowfun or current_app.now
 
     def __repr__(self):
-        return "<crontab: %s %s %s (m/h/d)>" % (self._orig_minute or "*",
-                                                self._orig_hour or "*",
-                                                self._orig_day_of_week or "*")
+        return "<crontab: {0} {1} {2} (m/h/d)>".format(
+                self._orig_minute or "*", self._orig_hour or "*",
+                self._orig_day_of_week or "*")
 
     def __reduce__(self):
         return (self.__class__, (self._orig_minute,

@@ -519,19 +519,16 @@ class test_signal_handlers(AppCase):
             raise SkipTest("Cry handler does not work on Jython")
         if hasattr(sys, "pypy_version_info"):
             raise SkipTest("Cry handler does not work on PyPy")
-        if sys.version_info > (2, 5):
 
-            class Logger(object):
-                _errors = []
+        class Logger(object):
+            _errors = []
 
-                def error(self, msg, *args, **kwargs):
-                    self._errors.append(msg)
-            logger = Logger()
-            handlers = self.psig(cd.install_cry_handler, logger)
-            self.assertIsNone(handlers["SIGUSR1"]("SIGUSR1", object()))
-            self.assertTrue(Logger._errors)
-        else:
-            raise SkipTest("Needs Python 2.5 or later")
+            def error(self, msg, *args, **kwargs):
+                self._errors.append(msg)
+        logger = Logger()
+        handlers = self.psig(cd.install_cry_handler, logger)
+        self.assertIsNone(handlers["SIGUSR1"]("SIGUSR1", object()))
+        self.assertTrue(Logger._errors)
 
     @disable_stdouts
     def test_worker_term_handler_only_stop_MainProcess(self):

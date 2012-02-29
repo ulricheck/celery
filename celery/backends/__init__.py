@@ -9,7 +9,7 @@ from ..utils import get_cls_by_name
 from ..utils.functional import memoize
 
 UNKNOWN_BACKEND = """\
-Unknown result backend: %r.  Did you spell that correctly? (%r)\
+Unknown result backend: {0!r}.  Did you spell that correctly? ({1!r})\
 """
 
 BACKEND_ALIASES = {
@@ -33,7 +33,7 @@ def get_backend_cls(backend=None, loader=None):
     try:
         return get_cls_by_name(backend, aliases)
     except ValueError as exc:
-        raise ValueError, ValueError(UNKNOWN_BACKEND % (
+        raise ValueError, ValueError(UNKNOWN_BACKEND.format(
                     backend, exc)), sys.exc_info()[2]
 
 

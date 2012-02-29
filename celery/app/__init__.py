@@ -204,7 +204,8 @@ class App(base.BaseApp):
         return annotations.prepare(self.conf.CELERY_ANNOTATIONS)
 
     def __repr__(self):
-        return "<Celery: %s:0x%x>" % (self.main or "__main__", id(self), )
+        return "<Celery: {0}:0x{1:x}>".format(
+                    self.main or "__main__", id(self))
 
     def __reduce__(self):
         # Reduce only pickles the configuration changes,

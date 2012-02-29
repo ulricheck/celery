@@ -15,9 +15,10 @@ import sys
 import time
 
 from collections import defaultdict
+from threading import Event
 
 from ..abstract import StartStopComponent
-from ..utils.threads import bgThread, Event
+from ..utils.threads import bgThread
 
 try:
     import pyinotify
@@ -223,8 +224,8 @@ class Autoreloader(bgThread):
     def on_change(self, files):
         modified = [f for f in files if self._maybe_modified(f)]
         if modified:
-            self.logger.info("Detected modified modules: %s" % (
-                    map(self._module_name, modified), ))
+            self.logger.info("Detected modified modules: %s",
+                                map(self._module_name, modified))
             self._reload(map(self._module_name, modified))
 
     def _reload(self, modules):

@@ -55,8 +55,8 @@ class Entry(object):
         self.tref.cancelled = True
 
     def __repr__(self):
-        return "<TimerEntry: %s(*%r, **%r)" % (
-                self.fun.__name__, self.args, self.kwargs)
+        return "<TimerEntry: {0}(*{1!r}, **{2!r})".format(
+                    self.fun.__name__, self.args, self.kwargs)
 
     if sys.version_info >= (3, 0):
 
@@ -182,7 +182,7 @@ class Timer(Thread):
         self.logger = logging.getLogger("timer2.Timer")
         self.not_empty = Condition(self.mutex)
         self.setDaemon(True)
-        self.setName("Timer-%s" % (self._timer_count(), ))
+        self.setName("Timer-{0}".format(self._timer_count()))
 
     def apply_entry(self, entry):
         try:
@@ -194,7 +194,7 @@ class Timer(Thread):
 
     def _next_entry(self):
         with self.not_empty:
-            delay, entry = self.scheduler.next()
+            delay, entry = next(self.scheduler)
             if entry is None:
                 if delay is None:
                     self.not_empty.wait(1.0)

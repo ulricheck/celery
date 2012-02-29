@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import sys
+import warnings
 
 from celery import task
 from celery import loaders
@@ -12,7 +13,6 @@ from celery.loaders import default
 from celery.loaders.app import AppLoader
 
 from celery.tests.utils import AppCase, Case
-from celery.tests.compat import catch_warnings
 
 
 class ObjectConfig(object):
@@ -186,13 +186,14 @@ class TestDefaultLoader(Case):
 
     def test_unconfigured_settings(self):
         context_executed = [False]
+        warnings.resetwarnings()
 
         class _Loader(default.Loader):
 
             def find_module(self, name):
                 raise ImportError(name)
 
-        with catch_warnings(record=True):
+        with warnings.catch_warnings(record=True):
             l = _Loader()
             self.assertDictEqual(l.conf, {})
             context_executed[0] = True
