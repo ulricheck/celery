@@ -8,6 +8,7 @@ import sys
 
 from collections import defaultdict
 from itertools import starmap
+from optparse import OptionParser, make_option as Option
 from unipath import Path
 
 RE_COMMENT = r'^\s*\#'
@@ -21,6 +22,8 @@ RE_PRINT = r'''(?:^|\s+)print\((?:"|')(?:\W+?)?[A-Z0-9:]{2,}'''
 RE_ABS_IMPORT = r'''from\s+ __future__\s+ import\s+ absolute_import'''
 
 acc = defaultdict(lambda: {"abs": False, "print": False})
+
+__version__ = "1.0.0"
 
 
 def compile(regex):
@@ -40,8 +43,10 @@ class FlakePP(object):
     map = {"abs": False, "print": False,
             "with": False, "with-used": False}
 
-    def __init__(self, verbose=False):
-        self.verbose = verbose
+    def __init__(self, verbose=False, use_26=False, quiet=False):
+        self.verbose = verbose  # XXX unused
+        self.quiet = quiet
+        self.use_26 = use_26
         self.steps = (("abs", self.re_abs_import),
                       ("with", self.re_with_import),
                       ("with-used", self.re_with),
@@ -65,7 +70,7 @@ class FlakePP(object):
         if index:
             if not acc["abs"]:
                 error("%(filename)s: missing abs import")
-            if acc["with-used"] and not acc["with"]:
+            if not self.use_26 and acc["with-used"] and not acc["with"]:
                 error("%(filename)s: missing with import")
             if acc["print"]:
                 error("%(filename)s: left over print statement")
@@ -113,15 +118,72 @@ class FlakePP(object):
                     yield line
 
     def announce(self, fmt, **kwargs):
-        sys.stderr.write((fmt + "\n") % kwargs)
+        if not self.quiet:
+            sys.stderr.write((fmt + "\n") % kwargs)
 
 
-def main(argv=sys.argv, exitcode=0):
-    for _, errors, _ in FlakePP(verbose=True).analyze(*argv[1:]):
-        if errors:
-            exitcode = 1
-    return exitcode
+
+class Command(object):
+    FlakePP = FlakePP
+    Parser = OptionParser
+
+    args = 'dir1 .. dirN'
+    version = __version__
+
+    def run(self, *files, **kwargs):
+        exitcode = 0
+        for _, errors, _ in self.FlakePP(**kwargs).analyze(*files):
+            if errors:
+                exitcode = 1
+        return exitcode
+
+    def get_options(self):
+        return (
+            Option("--2.6",
+                   default=False, action="store_true", dest="use_26",
+                   help="Specify support of Python 2.6 and up"),
+            Option("--verbose", "-v",
+                   default=False, action="store_true", dest="verbose",
+                   help="Show more output."),
+            Option("--quiet", "-q",
+                    default=False, action="store_true", dest="quiet",
+                    help="Don't show any output"),
+        )
+
+    def usage(self):
+        return "%%prog [options] %s" % (self.args, )
+
+    def expanduser(self, value):
+        if isinstance(value, basestring):
+            return os.path.expanduser(value)
+        return value
+
+    def handle_argv(self, prog_name, argv):
+        options, args = self.parse_options(prog_name, argv)
+        options = dict((k, self.expanduser(v))
+                            for k, v in vars(options).iteritems()
+                                if not k.startswith("_"))
+        argv = map(self.expanduser, argv)
+        return self.run(*args, **options)
+
+    def parse_options(self, prog_name, argv):
+        parser = self.Parser(prog=prog_name,
+                             usage=self.usage(),
+                             version=self.version,
+                             option_list=self.get_options())
+        return parser.parse_args(argv)
+
+    def execute_from_commandline(self, argv=None):
+        if argv is None:
+            argv = list(sys.argv)
+        prog_name = os.path.basename(argv[0])
+        return self.handle_argv(prog_name, argv[1:])
+
+
+
+def main(argv=sys.argv):
+    sys.exit(Command().execute_from_commandline(argv))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
