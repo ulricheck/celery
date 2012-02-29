@@ -71,8 +71,8 @@ class BeatCommand(Command):
                 default=conf.CELERYBEAT_SCHEDULE_FILENAME,
                 action="store", dest="schedule",
                 help="Path to the schedule database. The extension "
-                    "'.db' will be appended to the filename. Default: %s" % (
-                            conf.CELERYBEAT_SCHEDULE_FILENAME, )),
+                    "'.db' will be appended to the filename. "
+                    "Default: {0.CELERYBEAT_SCHEDULE_FILENAME}".format(conf)),
             Option('--max-interval',
                 default=None, type="float", dest="max_interval",
                 help="Max. seconds to sleep between schedule iterations."),

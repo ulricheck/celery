@@ -135,10 +135,9 @@ class WorkerCommand(Command):
             Option('-s', '--schedule',
                 default=conf.CELERYBEAT_SCHEDULE_FILENAME,
                 action="store", dest="schedule_filename",
-                help="Path to the schedule database if running with the -B "
-                     "option. The extension '.db' will be appended to the "
-                    "filename. Default: %s" % (
-                        conf.CELERYBEAT_SCHEDULE_FILENAME, )),
+                help="Path to the schedule database when -B is enabled. The"
+                     "extension '.db' will be appended to the filename. "
+                     "Default: {0.CELERYBEAT_SCHEDULE_FILENAME}".format(conf)),
             Option('--scheduler',
                 default=None,
                 action="store", dest="scheduler_cls",
@@ -146,9 +145,9 @@ class WorkerCommand(Command):
                      "celery.beat:PersistentScheduler"),
             Option('-S', '--statedb', default=conf.CELERYD_STATE_DB,
                 action="store", dest="state_db",
-                help="Path to the state database. The extension '.db' will "
-                     "be appended to the filename. Default: %s" % (
-                        conf.CELERYD_STATE_DB, )),
+                help="Path to the state database. The extension '.db' "
+                     "will be appended to the filename. "
+                     "Default: {0.CELERYD_STATE_DB}".format(conf)),
             Option('-E', '--events', default=conf.CELERY_SEND_EVENTS,
                 action="store_true", dest="send_events",
                 help="Send events so the worker can be monitored by "

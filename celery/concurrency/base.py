@@ -63,12 +63,10 @@ class BasePool(object):
         pass
 
     def terminate_job(self, pid):
-        raise NotImplementedError(
-                "%s does not implement kill_job" % (self.__class__, ))
+        raise NotImplementedError("{0} can't kill_job".format(self))
 
     def restart(self):
-        raise NotImplementedError(
-                "%s does not implement restart" % (self.__class__, ))
+        raise NotImplementedError("{0} can't restart".format(self))
 
     def stop(self):
         self._state = self.CLOSE

@@ -49,8 +49,8 @@ class Command(object):
                     help="Name of the app instance to use. "),
             Option("-b", "--broker",
                     default=None, action="store", dest="broker",
-                    help="Broker URL.  Default is %s" % (
-                            _default_broker_url, )),
+                    help="Broker URL.  Default: {0}".format(
+                        _default_broker_url)),
             Option("--loader",
                    default=None, action="store", dest="loader",
                    help="Name of the loader class to use. "
@@ -93,7 +93,7 @@ class Command(object):
 
     def usage(self):
         """Returns the command-line usage string for this app."""
-        return "%%prog [options] %s" % (self.args, )
+        return "%%prog [options] {self.args}".format(self)
 
     def get_options(self):
         """Get supported command line options."""

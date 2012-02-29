@@ -37,7 +37,7 @@ Inspired by http://snippets.dzone.com/posts/show/7248
 :license: BSD, see LICENSE for more details.
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import errno
 import os
@@ -55,6 +55,23 @@ CELERY_RDB_PORT = int(os.environ.get("CELERY_RDB_PORT") or default_port)
 _current = [None]
 
 _frame = getattr(sys, "_getframe")
+
+NO_AVAILABLE_PORT = """\
+{self.ident}: Couldn't find an available port.
+
+Please specify one using the CELERY_RDB_PORT environment variable.
+"""
+
+BANNER = """\
+{self.ident}: Please telnet into {self.host} {self.port}.
+
+Type `exit` in session to continue.
+
+{self.ident}: Waiting for client...
+"""
+
+SESSION_STARTED = "{self.ident}: Now in session with {self.remote_addr}."
+SESSION_ENDED = "{self.ident}: Session with {self.remote_addr} ended."
 
 
 class Rdb(Pdb):
@@ -87,20 +104,17 @@ class Rdb(Pdb):
             else:
                 break
         else:
-            raise Exception(
-                "%s: Could not find available port. Please set using "
-                "environment variable CELERY_RDB_PORT" % (self.me, ))
+            raise Exception(NO_AVAILABLE_PORT.format(self=self))
 
         self._sock.listen(1)
-        me = "%s:%s" % (self.me, this_port)
-        context = self.context = {"me": me, "host": host, "port": this_port}
-        print("%(me)s: Please telnet %(host)s %(port)s."
-              "  Type `exit` in session to continue." % context)
-        print("%(me)s: Waiting for client..." % context)
+        self.ident = ':'.join([self.me, this_port])
+        self.host = host
+        self.port = this_port
+        print(BANNER.format(self=self), file=sys.stderr)
 
         self._client, address = self._sock.accept()
-        context["remote_addr"] = ":".join(map(str, address))
-        print("%(me)s: In session with %(remote_addr)s" % context)
+        self.remote_addr = ":".join(map(str, address))
+        print(SESSION_STARTED.format(self=self), file=sys.stderr)
         self._handle = sys.stdin = sys.stdout = self._client.makefile("rw")
         Pdb.__init__(self, completekey="tab",
                            stdin=self._handle, stdout=self._handle)
@@ -111,7 +125,7 @@ class Rdb(Pdb):
         self._client.close()
         self._sock.close()
         self.active = False
-        print("%(me)s: Session %(remote_addr)s ended." % self.context)
+        print(SESSION_ENDED.format(self=self), file=sys.stderr)
 
     def do_continue(self, arg):
         self._close_session()

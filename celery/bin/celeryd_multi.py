@@ -104,6 +104,7 @@ from time import sleep
 from .. import __version__
 from ..platforms import shellsplit
 from ..utils import term
+from ..utils import pluralize
 from ..utils.encoding import from_utf8
 
 SIGNAMES = set(sig for sig in dir(signal)
@@ -112,16 +113,16 @@ SIGMAP = dict((getattr(signal, name), name) for name in SIGNAMES)
 
 
 USAGE = """\
-usage: %(prog_name)s start <node1 node2 nodeN|range> [celeryd options]
-       %(prog_name)s stop <n1 n2 nN|range> [-SIG (default: -TERM)]
-       %(prog_name)s restart <n1 n2 nN|range> [-SIG] [celeryd options]
-       %(prog_name)s kill <n1 n2 nN|range>
+usage: {prog_name} start <node1 node2 nodeN|range> [celeryd options]
+       {prog_name} stop <n1 n2 nN|range> [-SIG (default: -TERM)]
+       {prog_name} restart <n1 n2 nN|range> [-SIG] [celeryd options]
+       {prog_name} kill <n1 n2 nN|range>
 
-       %(prog_name)s show <n1 n2 nN|range> [celeryd options]
-       %(prog_name)s get hostname <n1 n2 nN|range> [-qv] [celeryd options]
-       %(prog_name)s names <n1 n2 nN|range>
-       %(prog_name)s expand template <n1 n2 nN|range>
-       %(prog_name)s help
+       {prog_name} show <n1 n2 nN|range> [celeryd options]
+       {prog_name} get hostname <n1 n2 nN|range> [-qv] [celeryd options]
+       {prog_name} names <n1 n2 nN|range>
+       {prog_name} expand template <n1 n2 nN|range>
+       {prog_name} help
 
 additional options (must appear after command name):
 
@@ -184,12 +185,12 @@ class MultiTool(object):
         try:
             self.commands[argv[0]](argv[1:], cmd)
         except KeyError:
-            self.error("Invalid command: %s" % argv[0])
+            self.error("Invalid command: {0}".format(argv[0]))
 
         return self.retcode
 
-    def say(self, msg):
-        self.fh.write("%s\n" % (msg, ))
+    def say(self, m, newline=True):
+        print(m, file=sys.stderr, end='\n' if newline else '')
 
     def names(self, argv, cmd):
         p = NamespacedOptionParser(argv)
@@ -217,7 +218,7 @@ class MultiTool(object):
         retcodes = []
         self.note("> Starting nodes...")
         for nodename, argv, _ in multi_args(p, cmd):
-            self.note("\t> %s: " % (nodename, ), newline=False)
+            self.note("\t> {0}: ".format(nodename), newline=False)
             retcode = self.waitexec(argv)
             self.note(retcode and self.FAILED or self.OK)
             retcodes.append(retcode)
@@ -234,8 +235,8 @@ class MultiTool(object):
         except OSError as exc:
             if exc.errno != errno.ESRCH:
                 raise
-            self.note("Could not signal %s (%s): No such process" % (
-                        nodename, pid))
+            self.note("Can't signal {0} ({1}): No such process".format(
+                      nodename, pid))
             return False
         return True
 
@@ -263,17 +264,16 @@ class MultiTool(object):
         for node in list(P):
             if node in P:
                 nodename, _, pid = node
-                self.note("\t> %s: %s -> %s" % (nodename,
-                                                SIGMAP[sig][3:],
-                                                pid))
+                self.note("\t> {0}: {1} -> {2}".format(
+                    nodename, SIGMAP[sig][3:], pid))
                 if not self.signal_node(nodename, pid, sig):
                     on_down(node)
 
         def note_waiting():
             left = len(P)
             if left:
-                self.note(self.colored.blue("> Waiting for %s %s..." % (
-                    left, left > 1 and "nodes" or "node")), newline=False)
+                self.note(self.colored.blue("> Waiting for {0} {1}...".format(
+                    left, pluralize(left, "node"))), newline=False)
 
         if retry:
             note_waiting()
@@ -284,7 +284,7 @@ class MultiTool(object):
                     self.note(".", newline=False)
                     nodename, _, pid = node
                     if not self.node_alive(pid):
-                        self.note("\n\t> %s: %s" % (nodename, self.OK))
+                        self.note("\n\t> {0}: {1}".format(nodename, self.OK))
                         on_down(node)
                         note_waiting()
                         break
@@ -306,7 +306,7 @@ class MultiTool(object):
             if pid:
                 nodes.append((nodename, tuple(argv), pid))
             else:
-                self.note("> %s: %s" % (nodename, self.DOWN))
+                self.note("> {0}: {1}".format(nodename, self.DOWN))
                 if callback:
                     callback(nodename, argv, pid)
 
@@ -316,7 +316,7 @@ class MultiTool(object):
         self.splash()
         p = NamespacedOptionParser(argv)
         for nodename, _, pid in self.getpids(p, cmd):
-            self.note("Killing node %s (%s)" % (nodename, pid))
+            self.note("Killing node {0} ({1})".format(nodename, pid))
             self.signal_node(nodename, pid, signal.SIGKILL)
 
     def stop(self, argv, cmd):
@@ -339,7 +339,7 @@ class MultiTool(object):
 
         def on_node_shutdown(nodename, argv, pid):
             self.note(self.colored.blue(
-                "> Restarting node %s: " % nodename), newline=False)
+                "> Restarting node {0}: ".format(nodename)), newline=False)
             retval = self.waitexec(argv)
             self.note(retval and self.FAILED or self.OK)
             retvals.append(retval)
@@ -360,33 +360,33 @@ class MultiTool(object):
             self.say(expander(template))
 
     def help(self, argv, cmd=None):
-        say(__doc__)
+        self.say(__doc__)
 
     def usage(self):
         self.splash()
-        say(USAGE % {"prog_name": self.prog_name})
+        self.say(USAGE.format(prog_name=self.prog_name))
 
     def splash(self):
         if not self.nosplash:
             c = self.colored
-            self.note(c.cyan("celeryd-multi v%s" % __version__))
+            self.note(c.cyan("celeryd-multi v{0}".format(__version__)))
 
     def waitexec(self, argv, path=sys.executable):
         args = " ".join([path] + list(argv))
         argstr = shellsplit(from_utf8(args))
         pipe = Popen(argstr, env=self.env)
-        self.info("  %s" % " ".join(argstr))
+        self.info(' ' + ' '.join(argstr))
         retcode = pipe.wait()
         if retcode < 0:
-            self.note("* Child was terminated by signal %s" % (-retcode, ))
+            self.note("* Child was terminated by signal {0}".format(-retcode))
             return -retcode
         elif retcode > 0:
-            self.note("* Child terminated with failure code %s" % (retcode, ))
+            self.note("* Child terminated with failure {0}".format(retcode))
         return retcode
 
-    def error(self, msg=None):
+    def error(self, msg=None, *args, **kwargs):
         if msg:
-            say(msg)
+            self.say(msg)
         self.usage()
         self.retcode = 1
         return 1
@@ -397,7 +397,7 @@ class MultiTool(object):
 
     def note(self, msg, newline=True):
         if not self.quiet:
-            say(str(msg), newline=newline)
+            self.say(str(msg), newline=newline)
 
 
 def multi_args(p, cmd="celeryd", append="", prefix="", suffix=""):
@@ -503,8 +503,8 @@ def format_opt(opt, value):
     if not value:
         return opt
     if opt[0:2] == "--":
-        return "%s=%s" % (opt, value)
-    return "%s %s" % (opt, value)
+        return "{0}={1}".format(opt, value)
+    return "{0} {1}".format(opt, value)
 
 
 def parse_ns_range(ns, ranges=False):
@@ -529,10 +529,6 @@ def abbreviations(map):
         return ret
 
     return expand
-
-
-def say(m, newline=True):
-    print(m, file=sys.stderr, end='\n' if newline else '')
 
 
 def findsig(args, default=signal.SIGTERM):

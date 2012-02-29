@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for more details.
 
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import sys
 import time
@@ -165,13 +165,14 @@ class DependencyGraph(object):
         :param fh: A file, or a file-like object to write the graph to.
 
         """
-        fh.write("digraph dependencies {\n")
+        print("digraph dependencies {", file=fh)
         for obj, adjacent in self.iteritems():
             if not adjacent:
-                fh.write(ws + '"%s"\n' % (obj, ))
+                print(ws, '"{obj}"'.format(obj=obj), file=fh, sep='')
             for req in adjacent:
-                fh.write(ws + '"%s" -> "%s"\n' % (obj, req))
-        fh.write("}\n")
+                print(ws, '"{obj} -> "{req}"'.format(obj=obj, req=req),
+                      file=fh, sep='')
+        print('}', file=fh)
 
     def __iter__(self):
         return self.adjacent.iterkeys()
@@ -190,9 +191,9 @@ class DependencyGraph(object):
         return '\n'.join(self.repr_node(N) for N in self)
 
     def repr_node(self, obj, level=1):
-        output = ["%s(%s)" % (obj, self.valency_of(obj))]
+        output = ["{0}({1})".format(obj, self.valency_of(obj))]
         for other in self[obj]:
-            d = "%s(%s)" % (other, self.valency_of(other))
+            d = "{0}({1})".format(other, self.valency_of(other))
             output.append('     ' * level + d)
             output.extend(self.repr_node(other, level + 1).split('\n')[1:])
         return '\n'.join(output)
@@ -210,7 +211,7 @@ class AttributeDictMixin(object):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'" % (
+            raise AttributeError("'{0}' object has no attribute '{1}'".format(
                     self.__class__.__name__, key))
 
     def __setattr__(self, key, value):
@@ -450,7 +451,7 @@ class ExceptionInfo(object):
         return self.traceback
 
     def __repr__(self):
-        return "<ExceptionInfo: %r>" % (self.exception, )
+        return "<ExceptionInfo: {self.exception!r}>".format(self=self)
 
     @property
     def exc_info(self):
@@ -521,7 +522,7 @@ class LimitedSet(object):
         return len(self._data.keys())
 
     def __repr__(self):
-        return "LimitedSet([%s])" % (repr(self._data.keys()))
+        return "LimitedSet({0!r})".format(self._data.keys())
 
     @property
     def chronologically(self):

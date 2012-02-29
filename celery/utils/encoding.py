@@ -92,7 +92,7 @@ def _safe_str(s, errors="replace"):
             return s.encode(encoding, errors)
         return unicode(s, encoding, errors)
     except Exception as exc:
-        return "<Unrepresentable %r: %r %r>" % (
+        return "<Unrepresentable {0!r}: {1!r} {2!r}>".format(
                 type(s), exc, "\n".join(traceback.format_stack()))
 
 

@@ -30,7 +30,7 @@ from ..utils.encoding import safe_str
 BUILTIN_MODULES = frozenset(["celery.task"])
 
 ERROR_ENVVAR_NOT_SET = (
-"""The environment variable %r is not set,
+"""The environment variable '{0}' is not set,
 and as such the configuration could not be loaded.
 Please set this variable and make it point to
 a configuration module.""")
@@ -54,7 +54,6 @@ class BaseLoader(object):
     """
     builtin_modules = BUILTIN_MODULES
     configured = False
-    error_envvar_not_set = ERROR_ENVVAR_NOT_SET
     override_backends = {}
     worker_initialized = False
 
@@ -115,7 +114,8 @@ class BaseLoader(object):
         if not module_name:
             if silent:
                 return False
-            raise ImproperlyConfigured(self.error_envvar_not_set % module_name)
+            raise ImproperlyConfigured(
+                    ERROR_ENVVAR_NOT_SET.format(module_name))
         return self.config_from_object(module_name, silent=silent)
 
     def config_from_object(self, obj, silent=False):

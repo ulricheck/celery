@@ -29,9 +29,8 @@ MSG_OPTIONS = ("mandatory", "priority", "immediate", "routing_key",
 
 #: Human readable queue declaration.
 QUEUE_FORMAT = """
-. %(name)s exchange:%(exchange)s (%(exchange_type)s) \
-binding:%(binding_key)s
-"""
+. {name:<12} exchange:{exchange} ({exchange_type}) binding:{binding_key}
+""".strip()
 
 #: Set of exchange names that have already been declared.
 _exchanges_declared = set()
@@ -93,9 +92,8 @@ class Queues(dict):
         active = self.consume_from
         if not active:
             return ""
-        info = [QUEUE_FORMAT.strip() % dict(
-                    name=(name + ":").ljust(12), **config)
-                        for name, config in sorted(active.iteritems())]
+        info = [QUEUE_FORMAT.format(name=name + ':', **config)
+                    for name, config in sorted(active.iteritems())]
         if indent_first:
             return textindent("\n".join(info), indent)
         return info[0] + "\n" + textindent("\n".join(info[1:]), indent)

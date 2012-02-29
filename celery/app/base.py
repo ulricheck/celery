@@ -33,9 +33,10 @@ if kombu.VERSION < (2, 0):
     raise ImportError("Celery requires Kombu version 1.1.0 or higher.")
 
 BUGREPORT_INFO = """
-platform -> system:%(system)s arch:%(arch)s imp:%(py_i)s
-software -> celery:%(celery_v)s kombu:%(kombu_v)s py:%(py_v)s
-settings -> transport:%(transport)s results:%(results)s
+platform -> system:{system} arch:{arch} imp:{py_i}
+software -> celery:{celery_v} kombu:{kombu_v} py:{py_v}
+settings -> transport:{conf.BROKER_TRANSPORT} \
+results:{conf.CELERY_RESULT_BACKEND}
 """
 
 
@@ -322,14 +323,15 @@ class BaseApp(object):
     def bugreport(self):
         import celery
         import kombu
-        return BUGREPORT_INFO % {"system": _platform.system(),
-                                 "arch": _platform.architecture(),
-                                 "py_i": platforms.pyimplementation(),
-                                 "celery_v": celery.__version__,
-                                 "kombu_v": kombu.__version__,
-                                 "py_v": _platform.python_version(),
-                                 "transport": self.conf.BROKER_TRANSPORT,
-                                 "results": self.conf.CELERY_RESULT_BACKEND}
+        return BUGREPORT_INFO.format(
+                    system=_platform.system(),
+                    arch=_platform.architecture(),
+                    py_i=platforms.pyimplementation(),
+                    celery_v=celery.__version__,
+                    kombu_v=kombu.__version__,
+                    py_v=_platform.python_version(),
+                    conf=self.conf,
+        )
 
     @property
     def pool(self):

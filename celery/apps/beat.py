@@ -16,12 +16,12 @@ from ..utils.timeutils import humanize_seconds
 
 STARTUP_INFO_FMT = """
 Configuration ->
-    . broker -> %(conninfo)s
-    . loader -> %(loader)s
-    . scheduler -> %(scheduler)s
-%(scheduler_info)s
-    . logfile -> %(logfile)s@%(loglevel)s
-    . maxinterval -> %(hmax_interval)s (%(max_interval)ss)
+    . broker -> {conninfo}
+    . loader -> {loader}
+    . scheduler -> {scheduler}
+{scheduler_info}
+    . logfile -> {logfile}@{loglevel}
+    . maxinterval -> {hmax_interval} ({max_interval}s)
 """.strip()
 
 
@@ -49,7 +49,7 @@ class Beat(configurated):
     def run(self):
         logger = self.setup_logging()
         print(str(self.colored.cyan(
-                    "celerybeat v%s is starting." % __version__)))
+            "celerybeat v{0} is starting.".format(__version__))))
         self.init_loader()
         self.set_process_title()
         self.start_scheduler(logger)
@@ -97,16 +97,16 @@ class Beat(configurated):
 
     def startup_info(self, beat):
         scheduler = beat.get_scheduler(lazy=True)
-        return STARTUP_INFO_FMT % {
-            "conninfo": self.app.broker_connection().as_uri(),
-            "logfile": self.logfile or "[stderr]",
-            "loglevel": LOG_LEVELS[self.loglevel],
-            "loader": qualname(self.app.loader),
-            "scheduler": qualname(scheduler),
-            "scheduler_info": scheduler.info,
-            "hmax_interval": humanize_seconds(beat.max_interval),
-            "max_interval": beat.max_interval,
-        }
+        return STARTUP_INFO_FMT.format(
+            conninfo=self.app.broker_connection().as_uri(),
+            logfile=self.logfile or "[stderr]",
+            loglevel=LOG_LEVELS[self.loglevel],
+            loader=qualname(self.app.loader),
+            scheduler=qualname(scheduler),
+            scheduler_info=scheduler.info,
+            hmax_interval=humanize_seconds(beat.max_interval),
+            max_interval=beat.max_interval,
+        )
 
     def set_process_title(self):
         arg_start = "manage" in sys.argv[0] and 2 or 1

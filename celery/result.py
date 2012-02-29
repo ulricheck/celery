@@ -119,7 +119,7 @@ class AsyncResult(object):
         return hash(self.task_id)
 
     def __repr__(self):
-        return "<AsyncResult: %s>" % self.task_id
+        return "<AsyncResult: {self.task_id}>".format(self=self)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -521,7 +521,7 @@ class EagerResult(AsyncResult):
         self._state = states.REVOKED
 
     def __repr__(self):
-        return "<EagerResult: %s>" % self.task_id
+        return "<EagerResult: {self.task_id}>".format(self=self)
 
     @property
     def result(self):

@@ -12,7 +12,7 @@
 from __future__ import absolute_import
 
 UNREGISTERED_FMT = """\
-Task of kind %s is not registered, please make sure it's imported.\
+Task of kind {0} is not registered, please make sure it's imported.\
 """
 
 
@@ -53,7 +53,7 @@ class NotRegistered(KeyError):
     """The task is not registered."""
 
     def __repr__(self):
-        return UNREGISTERED_FMT % str(self)
+        return UNREGISTERED_FMT.format(self)
 
 
 class AlreadyRegistered(Exception):

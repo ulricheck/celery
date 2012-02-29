@@ -415,3 +415,9 @@ def maybe_reraise():
     finally:
         # see http://docs.python.org/library/sys.html#sys.exc_info
         del(tb)
+
+
+def pluralize(n, text, suffix='s'):
+    if n > 1:
+        return text + suffix
+    return text

@@ -23,6 +23,8 @@ try:
 except ImportError:
     multiprocessing = None  # noqa
 
+from kombu.utils import reprcall
+
 from . import __version__
 from . import platforms
 from . import signals
@@ -114,8 +116,8 @@ class ScheduleEntry(object):
         return vars(self).iteritems()
 
     def __repr__(self):
-        return ("<Entry: %(name)s %(task)s(*%(args)s, **%(kwargs)s) "
-                "{%(schedule)s}>" % vars(self))
+        return "<Entry: {self.name} {call} {self.schedule}>".format(self=self,
+                    call=reprcall(self.task, self.args, self.kwargs))
 
 
 class Scheduler(object):
@@ -223,8 +225,8 @@ class Scheduler(object):
                                         **entry.options)
         except Exception as exc:
             raise SchedulingError, SchedulingError(
-                "Couldn't apply scheduled task %s: %s" % (
-                    entry.name, exc)), sys.exc_info()[2]
+                "Couldn't apply scheduled task {entry.name}: {exc}".format(
+                    entry=entry, exc=exc)), sys.exc_info()[2]
 
         if self.should_sync():
             self._do_sync()
@@ -365,7 +367,7 @@ class PersistentScheduler(Scheduler):
 
     @property
     def info(self):
-        return "    . db -> %s" % (self.schedule_filename, )
+        return "    . db -> {self.schedule_filename}".format(self)
 
 
 class Service(object):

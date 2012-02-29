@@ -15,17 +15,22 @@ from anyjson import deserialize
 from .. import __version__
 from ..app import app_or_default, current_app
 from ..platforms import EX_OK, EX_FAILURE, EX_UNAVAILABLE, EX_USAGE
-from ..utils import term
+from ..utils import pluralize, term
 from ..utils.timeutils import maybe_iso8601
 
 from ..bin.base import Command as CeleryCommand
 
 HELP = """
-Type '%(prog_name)s <command> --help' for help using
+Type '{prog_name} <command> --help' for help using
 a specific command.
 
 Available commands:
-%(commands)s
+{commands}
+"""
+
+MIGRATE_PROGRESS_FMT = """\
+Migrating task {state.count}/{state.strtotal}: \
+{body[task]}[{body[id]}]\
 """
 
 commands = {}
@@ -67,7 +72,7 @@ class Command(object):
         try:
             ret = self.run(*args, **kwargs)
         except Error as exc:
-            self.error(self.colored.red("Error: %s" % exc))
+            self.error(self.colored.red("Error: {0}".format(exc)))
             return exc.status
 
         return ret if ret is not None else EX_OK
@@ -104,7 +109,7 @@ class Command(object):
         raise NotImplementedError()
 
     def usage(self, command):
-        return "%%prog %s [options] %s" % (command, self.args)
+        return "%%prog {0} [options] {1}".format(command, self.args)
 
     def prettify_list(self, n):
         c = self.colored
@@ -138,8 +143,7 @@ class list_(Command):
     args = "<bindings>"
 
     def list_bindings(self, channel):
-        fmt = lambda q, e, r: self.out("%s %s %s" % (q.ljust(28),
-                                                     e.ljust(28), r))
+        fmt = lambda q, e, r: self.out("{0:<28} {1:<28} {2}".format(q, e, r))
         fmt("Queue", "Exchange", "Routing Key")
         fmt("-" * 16, "-" * 16, "-" * 16)
         for binding in channel.list_bindings():
@@ -148,7 +152,7 @@ class list_(Command):
     def run(self, what, *_, **kw):
         topics = {"bindings": self.list_bindings}
         if what not in topics:
-            raise ValueError("%r not in %r" % (what, topics.keys()))
+            raise ValueError("{0!r} not in {1!r}".format(what, topics.keys()))
         with self.app.broker_connection() as conn:
             self.app.amqp.get_task_consumer(conn).declare()
             with conn.channel() as channel:
@@ -204,25 +208,19 @@ class apply(Command):
 apply = command(apply)
 
 
-def pluralize(n, text, suffix='s'):
-    if n > 1:
-        return text + suffix
-    return text
-
-
 class purge(Command):
+    fmt_purged = "Purged {mnum} {messages} from {qnum} known task {queues}."
+    fmt_empty = "No messages purged from {qnum} {queues}"
 
     def run(self, *args, **kwargs):
         app = current_app()
         queues = len(app.amqp.queues.keys())
-        messages_removed = app.control.discard_all()
-        if messages_removed:
-            self.out("Purged %s %s from %s known task %s." % (
-                messages_removed, pluralize(messages_removed, "message"),
-                queues, pluralize(queues, "queue")))
-        else:
-            self.out("No messages purged from %s known %s" % (
-                queues, pluralize(queues, "queue")))
+        messages = app.control.discard_all()
+        self.out((self.fmt_purged if messages
+                                  else self.fmt_empty).format(
+                                      mnum=messages, qnum=queues,
+                                      messages=pluralize(messages, "message"),
+                                      queues=pluralize(queues, "queue")))
 purge = command(purge)
 
 
@@ -266,8 +264,9 @@ class inspect(Command):
     show_body = True
 
     def usage(self, command):
-        return "%%prog %s [options] %s [%s]" % (
-                command, self.args, "|".join(self.choices.keys()))
+        return "%%prog {command} [options] {args} [{choices}]".format(
+                    command=command, args=self.args,
+                    choices="|".join(self.choices))
 
     def run(self, *args, **kwargs):
         self.quiet = kwargs.get("quiet", False)
@@ -278,7 +277,7 @@ class inspect(Command):
         if command == "help":
             raise Error("Did you mean 'inspect --help'?")
         if command not in self.choices:
-            raise Error("Unknown inspect command: %s" % command)
+            raise Error("Unknown inspect command: {0}".format(command))
 
         destination = kwargs.get("destination")
         timeout = kwargs.get("timeout") or self.choices[command]
@@ -330,19 +329,19 @@ class status(Command):
                         status=EX_UNAVAILABLE)
         nodecount = len(replies)
         if not kwargs.get("quiet", False):
-            self.out("\n%s %s online." % (nodecount,
-                                          nodecount > 1 and "nodes" or "node"))
+            self.out("\n{count} {nodes} online.".format(
+                count=nodecount, nodes=pluralize(nodecount, "node")))
 status = command(status)
 
 
 class migrate(Command):
+    progress_fmt = MIGRATE_PROGRESS_FMT
 
     def usage(self, command):
-        return "%%prog %s <source_url> <dest_url>" % (command, )
+        return "%%prog {command} <source_url> <dest_url>".format(command)
 
     def on_migrate_task(self, state, body, message):
-        self.out("Migrating task %s/%s: %s[%s]" % (
-            state.count, state.strtotal, body["task"], body["id"]))
+        self.out(self.progress_fmt.format(state=state, body=body))
 
     def run(self, *args, **kwargs):
         if len(args) != 2:
@@ -433,13 +432,13 @@ shell = command(shell)
 class help(Command):
 
     def usage(self, command):
-        return "%%prog <command> [options] %s" % (self.args, )
+        return "%%prog <command> [options] {self.args}".format(self=self)
 
     def run(self, *args, **kwargs):
         self.parser.print_help()
-        self.out(HELP % {"prog_name": self.prog_name,
-                         "commands": "\n".join(indent(command)
-                                             for command in sorted(commands))})
+        self.out(HELP.format(prog_name=self.prog_name,
+                             commands="\n".join(indent(command)
+                                        for command in sorted(commands))))
 
         return EX_USAGE
 help = command(help)

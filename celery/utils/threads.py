@@ -18,8 +18,8 @@ class bgThread(threading.Thread):
     def body(self):
         raise NotImplementedError("subclass responsibility")
 
-    def on_crash(self, exc_info, msg, *fmt, **kwargs):
-        print(msg % fmt, file=sys.stderr)
+    def on_crash(self, exc_info, fmt, *args, **kwargs):
+        print(fmt % args, file=sys.stderr)
         traceback.print_exception(*exc_info, file=sys.stderr)
 
     def run(self):

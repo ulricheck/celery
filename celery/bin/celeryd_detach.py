@@ -58,10 +58,10 @@ class PartialOptionParser(OptionParser):
                 nargs = option.nargs
                 if len(rargs) < nargs:
                     if nargs == 1:
-                        self.error("%s option requires an argument" % opt)
+                        self.error("{0} requires an argument".format(opt))
                     else:
-                        self.error("%s option requires %d arguments" % (
-                                    opt, nargs))
+                        self.error(
+                            "{0} requires {1} arguments".format(opt, nargs))
                 elif nargs == 1:
                     value = rargs.pop(0)
                 else:
@@ -69,7 +69,7 @@ class PartialOptionParser(OptionParser):
                     del rargs[0:nargs]
 
             elif had_explicit_value:
-                self.error("%s option does not take a value" % opt)
+                self.error("{0} option does not take a value".format(opt))
             else:
                 value = None
             option.process(opt, value, values, self)
@@ -107,9 +107,9 @@ class detached_celeryd(object):
         parser = self.Parser(prog_name)
         options, values = parser.parse_args(argv)
         if options.logfile:
-            parser.leftovers.append("--logfile=%s" % (options.logfile, ))
+            parser.leftovers.append("--logfile={0.logfile}".format(options))
         if options.pidfile:
-            parser.leftovers.append("--pidfile=%s" % (options.pidfile, ))
+            parser.leftovers.append("--pidfile={0.pidfile}".format(options))
         return options, values, parser.leftovers
 
     def execute_from_commandline(self, argv=None):
