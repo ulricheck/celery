@@ -6,7 +6,10 @@
 """
 from __future__ import absolute_import
 
-if __name__ == "__main__" and __package__ is None:
+try:
+    if __name__ == "__main__" and __package__ is None:
+        __package__ = "celery.bin.celeryctl"
+except NameError:
     __package__ = "celery.bin.celeryctl"
 
 import cmd

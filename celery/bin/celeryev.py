@@ -2,8 +2,12 @@
 from __future__ import absolute_import
 from __future__ import with_statement
 
-if __name__ == "__main__" and __package__ is None:
+try:
+    if __name__ == "__main__" and __package__ is None:
+        __package__ = "celery.bin.celeryev"
+except NameError:
     __package__ = "celery.bin.celeryev"
+
 
 import os
 import sys

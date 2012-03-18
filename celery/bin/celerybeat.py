@@ -25,7 +25,10 @@
 from __future__ import with_statement
 from __future__ import absolute_import
 
-if __name__ == "__main__" and __package__ is None:
+try:
+    if __name__ == "__main__" and __package__ is None:
+        __package__ = "celery.bin.celerybeat"
+except NameError:
     __package__ = "celery.bin.celerybeat"
 
 import os
